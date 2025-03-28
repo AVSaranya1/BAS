@@ -51,6 +51,8 @@ namespace DataAccessLayer.Model
             public const string LanguageCode = "LanguageCode";
             public const string ServiceURL = "ServiceURL";
             public const string RegionCode = "RegionCode";
+            public const string LevelDetailGUID = "LevelDetailGUID";
+            public const string LevelGUID = "LevelGUID";
         }
 
         public class Messages
