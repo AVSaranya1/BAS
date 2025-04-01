@@ -468,6 +468,7 @@ namespace WebApi.Controllers
                     }
                     DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
                     DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
+                    DataTable dataTableClientRole = objModel.UserAccount.ConvertToDataTable(userId, 0);
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
@@ -519,74 +520,6 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        // Edit Update User Account
-        [HttpPut("EditUpdateUserAccount")]
-        public async Task<IActionResult> EditUpdateUserAccount([FromBody] UpdateUserAccountModel userAccount)
-        {
-            if (userAccount == null)
-            {
-                return BadRequest("Invalid input data.");
-            }
-            
-            else
-            {
-                try
-                {
-                    string responseMsg = string.Empty;
-
-                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
-                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    userAccount.CreatedBy = userId;
-                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-
-                    if (!string.IsNullOrEmpty(response))
-                    {
-                        await _auditLogService.LogAction("", "EditUpdateUserAccount", "");
-                        string? guidresp = await _guid.GetGUIDBasedOnUserGuid(userAccount.MasterGuid);
-                        if (userAccount.MasterGuid == guidresp)
-                        {
-                            using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
-                            {
-                                var result = await _repo.UserAccountDALRepo.EditUpdateUserAccountAsync(userAccount);
-                                _repo.Commit();
-                                if (result.updateuseraccount != null)
-                                {
-                                    switch (result.RetVal)
-                                    {
-                                        case >= 1:
-                                            responseMsg = result.Msg ?? string.Empty;
-                                            break;
-                                        case -1:
-                                            return Ok(result.Msg);
-                                        default:
-                                            _logger.LogError(Environment.NewLine);
-                                            _logger.LogError("Bad Request occurred while accessing the EditupdateUserAccount function in User Account api controller");
-                                            return BadRequest();
-                                    }
-
-                                }
-                            }
-                        }
-                        else
-                        {
-                            return BadRequest("Please Check the Master Guid");
-                        }
-                    }
-                    else
-                    {
-                        return BadRequest(Common.Messages.Login);
-                    }
-                    return Ok(responseMsg);
-                } 
-
-
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                    throw;
-                }
-            }
-        }
         // Update User Account
         [HttpPut("updateUserAccount")]
         public async Task<IActionResult> UpdateUserAccount([FromBody] UserAccountUpdateRequest userAccount)
@@ -627,6 +560,7 @@ namespace WebApi.Controllers
                             }
                             DataTable dataTable = userAccount.UserAccount.ConvertToDataTable(userAccount.OrgDataTable, userAccount.UserAccount.MasterGuid);
                             DataTable dataTableRole = userAccount.UserAccount.ConvertToDataTable(userAccount.RoleNameList, userId, userAccount.UserAccount.MasterGuid);
+                            DataTable dataTableClientRole = userAccount.UserAccount.ConvertToDataTable(userId, userAccount.UserAccount.MasterGuid);
                             using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                             {
                                 var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
