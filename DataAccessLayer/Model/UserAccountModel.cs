@@ -8,6 +8,7 @@ namespace DataAccessLayer.Model
     {
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
+        public DataTable UserAccountRoleClientTable = new DataTable();
         public DataTable ConvertToDataTable(List<RoleNameInUserAccount> models, long CreatedBy,int id)
         {
             // Define columns dynamically based on the model's properties
@@ -62,6 +63,55 @@ namespace DataAccessLayer.Model
 
             return UserAccountRoleTable;
         }
+        public DataTable ConvertToDataTable(long CreatedBy, int id)
+        {
+            
+            if (UserAccountRoleClientTable.Columns.Contains("UserID"))
+            {
+                UserAccountRoleClientTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleClientTable.Columns.Add("UserID", typeof(Int64));
+            }
+            if (UserAccountRoleClientTable.Columns.Contains("RoleID"))
+            {
+                UserAccountRoleClientTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleClientTable.Columns.Add("RoleID", typeof(Int64));
+            }
+
+
+            if (UserAccountRoleClientTable.Columns.Contains("CreatedBy"))
+            {
+                UserAccountRoleClientTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleClientTable.Columns.Add("CreatedBy", typeof(Int64));
+            }
+
+            // Add rows dynamically based on the model data
+                DataRow row = UserAccountRoleClientTable.NewRow();
+                
+                    if (id == 0)
+                    {
+                        row["UserID"] = 0;
+                    }
+                    else if (id > 0)
+                    {
+                        row["UserID"] = id;
+                    }
+
+                    
+                row["RoleID"] = 1;
+                row["CreatedBy"] = CreatedBy;
+                UserAccountRoleClientTable.Rows.Add(row);
+            return UserAccountRoleClientTable;
+        }
+        
         public DataTable ConvertToDataTable(List<UserAccountOrgDatatable> models, int id)
         {
             // Define columns dynamically based on the model's properties
@@ -119,7 +169,8 @@ namespace DataAccessLayer.Model
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
-        public int RoleID { get; set; }
+        [JsonIgnore]
+        public Int64 RoleID { get; set; }
         public long UserPolicy { get; set; }
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
@@ -176,7 +227,56 @@ namespace DataAccessLayer.Model
     {
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
+        public DataTable UserAccountRoleClientTable = new DataTable();
         public string? ProfileImg { get; set; }
+        public DataTable ConvertToDataTable(long CreatedBy, string GUid)
+        {
+
+            if (UserAccountRoleClientTable.Columns.Contains("UserGUID"))
+            {
+                UserAccountRoleClientTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleClientTable.Columns.Add("UserGUID", typeof(string));
+            }
+            if (UserAccountRoleClientTable.Columns.Contains("RoleID"))
+            {
+                UserAccountRoleClientTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleClientTable.Columns.Add("RoleID", typeof(Int64));
+            }
+
+
+            if (UserAccountRoleClientTable.Columns.Contains("CreatedBy"))
+            {
+                UserAccountRoleClientTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleClientTable.Columns.Add("CreatedBy", typeof(Int64));
+            }
+
+            // Add rows dynamically based on the model data
+            DataRow row = UserAccountRoleClientTable.NewRow();
+
+            if (GUid == "")
+            {
+                row["UserGUID"] = "";
+            }
+            else if (GUid !="")
+            {
+                row["UserGUID"] = "";
+            }
+
+
+            row["RoleID"] = 1;
+            row["CreatedBy"] = CreatedBy;
+            UserAccountRoleClientTable.Rows.Add(row);
+            return UserAccountRoleClientTable;
+        }
 
         public DataTable ConvertToDataTable(List<RoleNameInUserAccount> models, long CreatedBy, string GUid)
         {
@@ -202,10 +302,11 @@ namespace DataAccessLayer.Model
             {
                 UserAccountRoleTable.Rows.Clear();
             }
-            else {
+            else
+            {
                 UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
             }
-            
+
             // Add rows dynamically based on the model data
             foreach (var model in models)
             {
@@ -287,7 +388,8 @@ namespace DataAccessLayer.Model
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
-        public int RoleID { get; set; }
+        [JsonIgnore]
+        public Int64 RoleID { get; set; }
         public long UserPolicy { get; set; }
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
@@ -325,12 +427,14 @@ namespace DataAccessLayer.Model
     {
         public UpdateUserAccountModel? UserAccount { get; set; }
         public List<RoleNameInUserAccount?> RoleNameList { get; set; } = new List<RoleNameInUserAccount?>();
+        
         public List<UserAccountOrgDatatable?> OrgDataTable { get; set; } = new List<UserAccountOrgDatatable?>();
     }
     public class UserAccountInsertRequest
     {
         public UserAccountModel? UserAccount { get; set; }
         public List<RoleNameInUserAccount?> RoleNameList { get; set; } = new List<RoleNameInUserAccount?>();
+        
         public List<UserAccountOrgDatatable?> OrgDataTable { get; set; } = new List<UserAccountOrgDatatable?>();
     }
 
@@ -386,11 +490,12 @@ namespace DataAccessLayer.Model
         [JsonIgnore]
         public long? CreatedBy { get; set; }
     }
+    
     public class RoleNameInUserAccount
     {
-        public long? RoleID { get; set; }
+        public long? RoleID { get; set; } = 1;
         public DateOnly? RoleNameEffectiveDate { get; set; }
-        
+
     }
 
     public class ResetPassword
