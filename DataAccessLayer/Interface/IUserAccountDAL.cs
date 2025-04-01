@@ -28,9 +28,6 @@ namespace DataAccessLayer.Interface
 
         Task<(List<UpdateUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateUserAccountModel? userAccount);
 
-
-        Task<(List<UpdateUserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> EditUpdateUserAccountAsync(UpdateUserAccountModel? userAccount);
-
         Task<(List<UnlockUser?> unlockuser, int? RetVal, string? Msg)> UnlockUserAsync(UnlockUser? model);
     }
 }
