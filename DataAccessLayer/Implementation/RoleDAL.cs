@@ -197,43 +197,6 @@ namespace DataAccessLayer.Implementation
             return (roles, retVal, msg);
         }
 
-        public async Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> EditUpdateRoleAsync(GetRoleModel model)
-        {
-            DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@RoleID", model.RoleId);
-            parameters.Add("@RoleDesc", model.RoleName);
-            parameters.Add("@IsAdmin", model.IsAdmin);
-            parameters.Add("@IsEntityAdmin", model.IsEntityAdmin);
-            parameters.Add("@DisplayPDPAData", model.DisplayPDPAData);
-            parameters.Add("@Active", model.Active);
-            parameters.Add("@AccessToAllClient", model.AccessToAllClient);
-            parameters.Add("@IsPayrollAccessible", model.IsPayrollAccessible);
-            parameters.Add("@LevelDetailID", model.LevelDetailsID);
-            parameters.Add("@LevelID", model.LevelID);
-            parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model.ModuleTable), DbType.String);
-            parameters.Add("@UpdatedBy", model.CreatedBy);
-            parameters.Add("@Mode", Common.PageMode.EDIT);
-            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
-            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-            var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
-                                                              parameters,
-                                                              transaction: Transaction,
-                                                              commandType: CommandType.StoredProcedure);
-
-            var roles = result.Read<GetRoleModel?>().ToList();
-
-            // Ensure all result sets are consumed to retrieve the output parameters
-            while (!result.IsConsumed)
-            {
-                result.Read(); // Process remaining datasets
-            }
-
-            // Access the output parameters after consuming all datasets
-            long retVal = parameters.Get<long>("@RetVal");
-            string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
-
-            // Return the roles list along with output parameters
-            return (roles, retVal, msg);
-        }
+        
     }
 }
