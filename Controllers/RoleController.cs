@@ -245,73 +245,7 @@ namespace WebApi.Controllers
         }
 
         // Update User Based on UserID
-        [HttpPut("EditUpdateUserRole")]
-        public async Task<IActionResult> EditUpdateUserRole([FromBody] GetRoleModel roleModel)
-        {
-            if (roleModel == null)
-            {
-                return BadRequest("Invalid input data.");
-            }
-
-            else
-            {
-                try
-                {
-                    string responsemsg = string.Empty;
-                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
-                    {
-                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
-                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                        //if (!string.IsNullOrEmpty(response))
-                        //{
-                            await _auditLogService.LogAction("", "EditUpdateUserRole", "");
-                            string guidResp = await _guid.GetGUIDBasedOnUserRoleGuid(roleModel.RoleGuid);
-                            if(roleModel.RoleGuid== guidResp)
-                            {
-                                var result = await _repo.RoleDALRepo.EditUpdateRoleAsync(roleModel);
-                                var msg = "Role updated successfully.";
-                                _repo.Commit();
-                                if (result.roleModels != null)
-                                {
-                                    switch (result.RetVal)
-                                    {
-                                        case >= 1:
-                                            responsemsg = msg;
-                                            break;
-
-                                        case -1:
-                                            responsemsg = result.Msg ?? string.Empty;
-                                            break;
-
-                                        default:
-                                            _logger.LogError(Environment.NewLine);
-                                            _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
-                                            return BadRequest();
-
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                return BadRequest("Please Check Role Guid");
-                            }
-                        //}
-                        //else
-                        //{
-                        //    return BadRequest(Common.Messages.Login);
-                        //}
-                        return Ok(responsemsg);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                    throw;
-                }
-            }
-        }
-
+        
         [HttpPut("UpdateRole")]
         public async Task<IActionResult> UpdateRole(RoleInsertUpdateRequest objModel)
         {
