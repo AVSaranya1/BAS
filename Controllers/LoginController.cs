@@ -169,7 +169,11 @@ namespace WebApi.Controllers
                             HttpContext?.Session?.SetString(Common.SessionVariables.Token, token);
                             await _auditLogService.LogAction(strGuid ?? "", "LOGIN", token);
 
-                            return Ok(token);
+                            return Ok(new
+                            {
+                                Token = token,
+                                UserDetails = lstLoginUser
+                            });
 
                         default:
                             return Unauthorized("Invalid login.");
