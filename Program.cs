@@ -19,6 +19,7 @@ using WebApi.Middleware;
 
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add session services
@@ -28,6 +29,16 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
     options.Cookie.HttpOnly = true; // Prevents JavaScript access
     options.Cookie.IsEssential = true; // Ensures session works without tracking consent
+});
+
+// Configure CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder.WithOrigins("http://localhost:5173") // Your React app URL
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials());
 });
 
 builder.Services.AddControllersWithViews();
@@ -159,6 +170,8 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 
 var app = builder.Build();
+
+app.UseCors("AllowAll");
 
 using (var scope = app.Services.CreateScope())
 {
