@@ -171,32 +171,41 @@ namespace WebApi.Controllers
 
                 else
                 {
-                    using (IUowRole _repoModule = new UowRole(_httpContextAccessor))
+                    
+                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
                         foreach (var Module in objModel.ModuleDatatable)
                         {
-                            if(Module.RARMode!="" && Module.RARMode!="string")
+                            if (Module.RARMode != "" && Module.RARMode != "string")
                             {
-                             string RarMode= await _repoModule.RoleDALRepo.ModuleTypeCheckBeforeInsert(Module.RARMode);
-                                _repoModule.Commit();
-                                if (!string.IsNullOrEmpty(RarMode) && RarMode.Contains(Module.RARMode))
+                                string RarMode = await _repo.RoleDALRepo.ModuleTypeCheckBeforeInsert(Module.RARMode);
+                                
+                                if (!string.IsNullOrEmpty(RarMode))
                                 {
-                                    
+                                    // Split both RARMode (Input) & RarMode (SP Output) into arrays
+                                    var inputModes = Module.RARMode.Split('_', StringSplitOptions.RemoveEmptyEntries);
+                                    var validModes = RarMode.Split('_', StringSplitOptions.RemoveEmptyEntries);
+
+                                    // Check if any mode in validModes exists in inputModes
+                                    if (validModes.Any(mode => inputModes.Contains(mode)))
+                                    {
+                                        // Valid: At least one valid mode exists in inputModes, continue processing
+                                    }
+                                    else
+                                    {
+                                        return BadRequest($"Invalid Mode: {Module.RARMode}. Expected at least one of: {RarMode}");
+                                    }
                                 }
                                 else
                                 {
-                                    return BadRequest("Invalid Mode "+ Module.RARMode);
+                                    return BadRequest($"Invalid Mode: {Module.RARMode}. No valid modes found from SP.");
                                 }
                             }
-                            else if(Module.RARMode=="string")
+                            else if (Module.RARMode == "string")
                             {
                                 return BadRequest("Invalid Mode " + Module.RARMode);
                             }
                         }
-                        
-                    }
-                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
-                    {
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession(Common.SessionVariables.Guid);
@@ -259,21 +268,34 @@ namespace WebApi.Controllers
 
                 else
                 {
-                    using (IUowRole _repoModule = new UowRole(_httpContextAccessor))
+                    
+                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
                         foreach (var Module in objModel.ModuleDatatable)
                         {
                             if (Module.RARMode != "" && Module.RARMode != "string")
                             {
-                                string RarMode = await _repoModule.RoleDALRepo.ModuleTypeCheckBeforeInsert(Module.RARMode);
-                                _repoModule.Commit();
-                                if (!string.IsNullOrEmpty(RarMode) && RarMode.Contains(Module.RARMode))
+                                string RarMode = await _repo.RoleDALRepo.ModuleTypeCheckBeforeInsert(Module.RARMode);
+                                
+                                if (!string.IsNullOrEmpty(RarMode))
                                 {
+                                    // Split both RARMode (Input) & RarMode (SP Output) into arrays
+                                    var inputModes = Module.RARMode.Split('_', StringSplitOptions.RemoveEmptyEntries);
+                                    var validModes = RarMode.Split('_', StringSplitOptions.RemoveEmptyEntries);
 
+                                    // Check if any mode in validModes exists in inputModes
+                                    if (validModes.Any(mode => inputModes.Contains(mode)))
+                                    {
+                                        // Valid: At least one valid mode exists in inputModes, continue processing
+                                    }
+                                    else
+                                    {
+                                        return BadRequest($"Invalid Mode: {Module.RARMode}. Expected at least one of: {RarMode}");
+                                    }
                                 }
                                 else
                                 {
-                                    return BadRequest("Invalid Mode " + Module.RARMode);
+                                    return BadRequest($"Invalid Mode: {Module.RARMode}. No valid modes found from SP.");
                                 }
                             }
                             else if (Module.RARMode == "string")
@@ -281,10 +303,6 @@ namespace WebApi.Controllers
                                 return BadRequest("Invalid Mode " + Module.RARMode);
                             }
                         }
-
-                    }
-                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
-                    {
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession(Common.SessionVariables.Guid);
