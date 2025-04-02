@@ -206,6 +206,7 @@ namespace WebApi.Controllers
                         string strUserDisplayName = lstUserDetails[0]?.DisplayName?.Trim() ?? string.Empty;
                         string strUserRoleID = Convert.ToString(lstUserDetails[0]?.RoleID ?? 0);
                         string strUserRoleName = lstUserDetails[0]?.RoleDesc?.Trim() ?? string.Empty;
+                        string strUserRoleGuid = lstUserDetails[0]?.RoleGuid?.Trim() ?? string.Empty;
                         string strUserRoleType = lstUserDetails[0]?.RoleName?.Trim() ?? string.Empty;
                         string strDisplayPDPA = lstUserDetails[0]?.DisplayPDPA?.Trim() ?? string.Empty;
                         string strPayrollAccessible = lstUserDetails[0]?.PayrollAccessible?.Trim() ?? string.Empty;
@@ -218,12 +219,13 @@ namespace WebApi.Controllers
                         string strUserImgPath = lstUserDetails[0]?.ImagePath?.Trim() ?? string.Empty;
                         string strGuid = lstUserDetails[0]?.Guid?.Trim() ?? string.Empty;
                         string strRegionCode = lstUserDetails[0]?.RegionCode?.Trim() ?? string.Empty;
-                        
 
+                        
                         HttpContext.Session.SetString(Common.SessionVariables.UserID, strUserID);
                         HttpContext.Session.SetString(Common.SessionVariables.UserName, strUserName);
                         HttpContext.Session.SetString(Common.SessionVariables.UserDisplayName, strUserDisplayName);
                         HttpContext.Session.SetString(Common.SessionVariables.UserRoleID, strUserRoleID);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserRoleGuID, strUserRoleGuid);
                         HttpContext.Session.SetString(Common.SessionVariables.UserRoleName, strUserRoleName);
                         HttpContext.Session.SetString(Common.SessionVariables.UserRoleType, strUserRoleType);
                         HttpContext.Session.SetString(Common.SessionVariables.DisplayPDPA, strDisplayPDPA);
