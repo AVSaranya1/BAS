@@ -48,6 +48,7 @@ builder.Services.AddHttpContextAccessor(); // Required for accessing session in 
 string connectionString = builder.Configuration.GetConnectionString("connection") ??
     throw new InvalidOperationException("Database connection string is missing."); ;
 
+builder.Services.AddScoped<IUowEntityMenu, UowEntityMenu>();
 // Register your other services (UoWs, EmailServices, etc.)
 builder.Services.AddScoped<IUowOrganisation>(sp => new UowOrganisation(connectionString));
 builder.Services.AddScoped<IUowEmailTemplate>(sp => new UowEmailTemplate(connectionString));
