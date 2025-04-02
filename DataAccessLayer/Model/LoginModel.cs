@@ -18,6 +18,7 @@ namespace DataAccessLayer.Model
         public string? PasswordExpiry { get; set; }
         public string? PasswordExpiryDate { get; set; }
         public int? RoleID { get; set; }
+        public string? RoleGuid { get; set; }
         public string? RoleDesc { get; set; }
         public string? RoleName { get; set; }
         public string? RoleType { get; set; }
