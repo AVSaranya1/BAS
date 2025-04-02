@@ -37,6 +37,7 @@ namespace DataAccessLayer.Model
             public const string UserID = "UserID";
             public const string UserDisplayName = "UserDisplayName";
             public const string UserRoleID = "UserRoleID";
+            public const string UserRoleGuID = "UserRoleGuID";
             public const string UserRoleName = "UserRoleName";
             public const string UserRoleType = "UserRoleType";
             public const string DisplayPDPA = "DisplayPDPA";
