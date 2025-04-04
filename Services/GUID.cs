@@ -53,6 +53,42 @@ namespace WebApi.Services
             }
             return response;
         }
+        public async Task<string> GetGUIDBasedOnClientUserGuid(string? UpdatedGuidBy)
+        {
+            string response = string.Empty;
+            try
+            {
+
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetClientGUID(UpdatedGuidBy);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
 
         public async Task<string> GetGUIDBasedOnUserAccountRoleGuid(string? UpdatedGuidBy)
         {
@@ -100,6 +136,79 @@ namespace WebApi.Services
                 using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
                 {
                     var result = await _repo.GUIDDALRepo.GetGUIDBasedOnRoleGuid(UpdatedGuidBy);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
+        public async Task<string> GetGUIDBasedOnClientUserRoleGuid(string? UpdatedGuidBy, string ClientDBName)
+        {
+            string response = string.Empty;
+            try
+            {
+
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetGUIDBasedOnClientRoleGuid(UpdatedGuidBy, ClientDBName);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
+
+        public async Task<string> GetGUIDBasedOnClientLevelInfo(string? UpdatedGuidBy)
+        {
+            string response = string.Empty;
+            try
+            {
+
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetGUIDBasedOnClientLevelInfo(UpdatedGuidBy);
 
                     _repo.Commit();
                     if (result.GetGuid == true || result.GetGuid == false)
@@ -202,6 +311,43 @@ namespace WebApi.Services
             return response;
         }
 
+        public async Task<string> GetGUIDBasedOnClientUserPolicy(string? UpdatedGuidBy, string? ClientDBName)
+        {
+            string response = string.Empty;
+            try
+            {
+
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetGUIDBasedOnClientUserPolicy(UpdatedGuidBy, ClientDBName);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
+
         public async Task<string> GetGUIDBasedOnNationality(string? UpdatedGuidBy)
         {
             string response = string.Empty;
@@ -238,6 +384,42 @@ namespace WebApi.Services
             return response;
         }
 
+        public async Task<string> GetGUIDBasedOnClientDivision(string? UpdatedGuidBy)
+        {
+            string response = string.Empty;
+            try
+            {
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetGUIDBasedOnClientDivision(UpdatedGuidBy);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
+        
         public async Task<string> GetGUIDBasedOnMailServer(string? UpdatedGuidBy)
         {
             string response = string.Empty;
