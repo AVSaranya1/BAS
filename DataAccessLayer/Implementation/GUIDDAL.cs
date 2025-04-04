@@ -43,6 +43,11 @@ namespace DataAccessLayer.Implementation
                     Connection = new SqlConnection(dynamicConnectionString);
                 }
             }
+            
+        }
+        
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUID(string? UserGuid)
+        {
             if (Connection.Database == "master")
             {
                 string? masterConnection = _configuration.GetConnectionString("connection");
@@ -53,10 +58,6 @@ namespace DataAccessLayer.Implementation
                 string? masterConnection = _configuration.GetConnectionString("connection");
                 Connection = new SqlConnection(masterConnection);
             }
-        }
-        
-        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUID(string? UserGuid)
-        {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_USERGUID");
             parameters.Add("@UpdatedBy", UserGuid);
@@ -77,9 +78,42 @@ namespace DataAccessLayer.Implementation
 
             return (res, RetVal, Msg);
         }
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetClientGUID(string? UserGuid)
+        {
+            
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Mode", "GET_CLIENTUSERGUID");
+            parameters.Add("@UpdatedBy", UserGuid);
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_GetGUID",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var guid = (await multi.ReadAsync<GUIDModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
+            bool res = guid.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
+        }
 
         public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnUserAccountRoleGuid(string? UserGuid)
         {
+            if (Connection.Database == "master")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+            if (Connection.Database != "MasterData")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_USERAccountRoleGUID");
             parameters.Add("@UpdatedBy", UserGuid);
@@ -103,6 +137,16 @@ namespace DataAccessLayer.Implementation
 
         public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnRoleGuid(string? UserGuid)
         {
+            if (Connection.Database == "master")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+            if (Connection.Database != "MasterData")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_ROLEGUID");
             parameters.Add("@UpdatedBy", UserGuid);
@@ -123,9 +167,66 @@ namespace DataAccessLayer.Implementation
 
             return (res, RetVal, Msg);
         }
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnClientRoleGuid(string? UserGuid, string? ClientDBName)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Mode", "GET_CLIENTROLEGUID");
+            parameters.Add("@UpdatedBy", UserGuid);
+            parameters.Add("@ClientDBName", ClientDBName);
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_GetGUID",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var guid = (await multi.ReadAsync<GUIDModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
+            bool res = guid.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
+        }
+
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnClientLevelInfo(string? UserGuid)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Mode", "GET_CLIENTLevelInfoGUID");
+            parameters.Add("@UpdatedBy", UserGuid);
+            
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_GetGUID",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var guid = (await multi.ReadAsync<GUIDModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
+            bool res = guid.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
+        }
 
         public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnOrgName(string? UserGuid)
         {
+            if (Connection.Database == "master")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+            if (Connection.Database != "MasterData")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_ORGGUID");
             parameters.Add("@UpdatedBy", UserGuid);
@@ -149,9 +250,43 @@ namespace DataAccessLayer.Implementation
 
         public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnUserPolicy(string? UserGuid)
         {
+            if (Connection.Database == "master")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+            if (Connection.Database != "MasterData")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_UserPolicyGUID");
             parameters.Add("@UpdatedBy", UserGuid);
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_GetGUID",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var guid = (await multi.ReadAsync<GUIDModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
+            bool res = guid.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
+        }
+
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnClientUserPolicy(string? UserGuid, string? ClientDBName)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Mode", "GET_ClientUserPolicyGUID");
+            parameters.Add("@UpdatedBy", UserGuid);
+            parameters.Add("@ClientDBName", ClientDBName);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var multi = await Connection.QueryMultipleAsync("sp_GetGUID",
@@ -215,5 +350,31 @@ namespace DataAccessLayer.Implementation
 
             return (res, RetVal, Msg);
         }
+
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnClientDivision(string? updatedGuidBy)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Mode", "GET_ClientDivisionGUID");
+            parameters.Add("@UpdatedBy", updatedGuidBy);
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_GetGUID",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var guid = (await multi.ReadAsync<GUIDModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
+            bool res = guid.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
+        }
+
+        
     }
 }
+
