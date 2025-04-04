@@ -12,21 +12,18 @@ namespace DataAccessLayer.Uow.Implementation
         GUIDDAL? objGUIDDAL = null;
         IDbTransaction? _transaction;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly string connectionString;
-        private readonly IDbConnection? _connection;
-
         IDbConnection? connection = null;
 
 
         // Existing constructor that accepts connection string and IHttpContextAccessor.
-        public UowGUID(string connectionstring, IHttpContextAccessor httpContextAccessor)
+        public UowGUID(string connectionString, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
 
             if (_httpContextAccessor.HttpContext?.Session.GetString("DBName") != null)
             {
                 string dbName = _httpContextAccessor.HttpContext?.Session.GetString("DBName") ?? "";
-                string finalConnectionString = BuildConnectionString(connectionstring, dbName);
+                string finalConnectionString = BuildConnectionString(connectionString, dbName);
                 connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
                 connection.Open();
                 _transaction = connection.BeginTransaction();
@@ -43,14 +40,14 @@ namespace DataAccessLayer.Uow.Implementation
                 string dbName = _httpContextAccessor.HttpContext?.Session?.GetString("DBName") ?? "";
                 string maxPoolSize = _httpContextAccessor.HttpContext?.Session?.GetString("MaxPoolSize") ?? "100";
 
-                string finalConnectionString = BuildConnectionString(connectionstring, serverName, userId, password, dbName, maxPoolSize);
+                string finalConnectionString = BuildConnectionString(connectionString, serverName, userId, password, dbName, maxPoolSize);
                 connection = new SqlConnection(finalConnectionString);
                 connection.Open();
                 _transaction = connection.BeginTransaction();
             }
             else
             {
-                connection = new SqlConnection(connectionstring);
+                connection = new SqlConnection(connectionString);
                 connection.Open();
                 _transaction = connection.BeginTransaction();
             }
