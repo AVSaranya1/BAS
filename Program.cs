@@ -16,6 +16,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Localization;
 using Microsoft.SqlServer.Management.Smo.Wmi;
 using WebApi.Middleware;
+using Microsoft.Extensions.FileProviders;
 
 
 
@@ -171,6 +172,20 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 
 
 var app = builder.Build();
+
+//Added File Folder
+var uploadPath = builder.Configuration["FileUpload:PhysicalFilePath"];
+var requestPath = builder.Configuration["FileUpload:VirtualFilePath"];
+
+// Serve wwwroot normally
+app.UseStaticFiles();
+
+// Serve /img from D:\Workspace\BAS\Img
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadPath),
+    RequestPath = requestPath
+});
 
 app.UseCors("AllowAll");
 
