@@ -61,6 +61,7 @@ namespace DataAccessLayer.Model
             public const string Login = "Try To Login";
             public const string NoRecordsFound = "No Records Found";
             public const string InvalidData = "Invalid Data";
+            public const string ConfirmPasswordNotSame = "Password and Confirm Password Not Same";
         }
         public class PageMode
         {
@@ -91,6 +92,7 @@ namespace DataAccessLayer.Model
             public const string GET_CLIENT_DETAIL = "GET_CLIENT_DETAIL";
             public const string CHECK_ModuleType = "CHECK_ModuleType";
             public const string CHECKUSEREXISTS = "CHECKUSEREXISTS";
+            public const string VALIDATE_TOKEN= "VALIDATE_TOKEN";
         }
     }
 
