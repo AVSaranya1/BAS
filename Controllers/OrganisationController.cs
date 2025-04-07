@@ -10,6 +10,8 @@ using DataAccessLayer.Uow.Interface;
 using WebApi.Services.Interface;
 using Newtonsoft.Json.Linq;
 using WebApi.Services;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
 
 namespace WebApi.Controllers
 {
@@ -23,18 +25,48 @@ namespace WebApi.Controllers
         
         string token = string.Empty;
         string userGuid = string.Empty;
-        public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService) : base(configuration)
+        private readonly IWebHostEnvironment _environment;
+        private readonly string _uploadFolder;
+        public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService, IWebHostEnvironment environment) : base(configuration)
         {
             _logger = logger;
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _auditLogService = auditLogService;
+            _environment = environment;
+            _uploadFolder= configuration["FileUpload:VirtualFilePath"] ?? "img";
         }
 
         [HttpPost("InsertOrganisation")]
-        public async Task<IActionResult> InsertOrganisation(OrganisationModel orgModel)
+        public async Task<IActionResult> InsertOrganisation([FromForm] OrganisationModel orgModel)
         {
             try
             {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+
+                // Get file extension
+                var extension = Path.GetExtension(orgModel.Logo.FileName).Trim().ToLowerInvariant();
+                if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                {
+                    return BadRequest("Invalid file type.");
+                }
+                else
+                {
+                    if (!Directory.Exists(_uploadFolder))
+                        Directory.CreateDirectory(_uploadFolder);
+
+                    var filePath = Path.Combine(_uploadFolder, orgModel.Logo.FileName.Trim());
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await orgModel.Logo.CopyToAsync(stream);
+                    }
+
+                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{orgModel.Logo.FileName}";
+                }
+                
                 var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
                 await _auditLogService.LogAction(userGuid, "InsertOrganisation", token);
 
@@ -64,11 +96,19 @@ namespace WebApi.Controllers
 
                 string token = string.Empty;
                 string userGuid = string.Empty;
-
+                if (!Directory.Exists(_uploadFolder))
+                    Directory.CreateDirectory(_uploadFolder);
                 // Retrieve session values if session exists
-         
-                var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
 
+                var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
+                foreach(var org in lsOrganisation)
+                {
+                    var filePath = Path.Combine(_uploadFolder, org.Logo);
+                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{org.Logo}";
+                    org.LogoUrl = fileUrl;
+                }
+
+               
                 await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
 
                 if (lsOrganisation != null)
@@ -145,6 +185,9 @@ namespace WebApi.Controllers
                 await _auditLogService.LogAction(userGuid, "GetOrganisationById", token);
                 if (objOrganisationModel != null)
                 {
+                    var filePath = Path.Combine(_uploadFolder, objOrganisationModel.Logo);
+                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{objOrganisationModel.Logo}";
+                    objOrganisationModel.LogoUrl = fileUrl;
                     return Ok(objOrganisationModel);
                 }
                 else
@@ -161,7 +204,7 @@ namespace WebApi.Controllers
 
 
         [HttpPut("UpdateOrganisation")]
-        public async Task<IActionResult> UpdateOrganisation([FromBody] OrganisationModel Org)
+        public async Task<IActionResult> UpdateOrganisation([FromForm] OrganisationModel Org)
         {
 
             if (Org.Guid!=null && Org.Guid=="string")
@@ -171,6 +214,32 @@ namespace WebApi.Controllers
 
             try
             {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+
+                // Get file extension
+                var extension = Path.GetExtension(Org.Logo.FileName).ToLowerInvariant();
+                if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                {
+                    return BadRequest("Invalid file type.");
+                }
+                else
+                {
+                    if (!Directory.Exists(_uploadFolder))
+                        Directory.CreateDirectory(_uploadFolder);
+
+                    var filePath = Path.Combine(_uploadFolder, Org.Logo.FileName);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await Org.Logo.CopyToAsync(stream);
+                    }
+
+                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{Org.Logo.FileName}";
+                }
                 var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
                 await _auditLogService.LogAction("","UpdateOrganisation", token);
                 var msg = "Organization updated successfully.";
