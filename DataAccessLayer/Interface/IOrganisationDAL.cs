@@ -9,9 +9,9 @@ namespace DataAccessLayer.Interface
 {
     public interface IOrganisationDAL
     {
-        Task<List<OrganisationModel>> GetAllOrganisation();
+        Task<List<GetOrganisationModel>> GetAllOrganisation();
 
-        Task<OrganisationModel> GetOrganisationById(string Guid);
+        Task<GetOrganisationModel> GetOrganisationById(string Guid);
 
 
         Task<string> InsertOrganisation(OrganisationModel OrganisationModel);
