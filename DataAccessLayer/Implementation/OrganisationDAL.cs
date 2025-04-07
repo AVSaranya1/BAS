@@ -50,7 +50,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@PriEmailAddress", model.PriEmailAddress);
                     parameters.Add("@SecEmailAddress", model.SecEmailAddress);
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    parameters.Add("@CompanyLogo", model.Logo);
+                    parameters.Add("@CompanyLogo", model.Logo.FileName.Trim());
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Active", model.Active);
@@ -78,9 +78,9 @@ namespace DataAccessLayer.Implementation
             }
         }
 
-        public async Task<List<OrganisationModel>> GetAllOrganisation()
+        public async Task<List<GetOrganisationModel>> GetAllOrganisation()
         {
-            List<OrganisationModel> lstResult = new List<OrganisationModel>();
+            List<GetOrganisationModel> lstResult = new List<GetOrganisationModel>();
             try
             {
 
@@ -102,7 +102,7 @@ namespace DataAccessLayer.Implementation
 
                             //transaction.Commit();
 
-                            return multi.Read<OrganisationModel>().ToList();
+                            return multi.Read<GetOrganisationModel>().ToList();
                         }
                         catch
                         {
@@ -127,9 +127,9 @@ namespace DataAccessLayer.Implementation
         }
 
 
-        public async Task<OrganisationModel> GetOrganisationById(string strGuid)
+        public async Task<GetOrganisationModel> GetOrganisationById(string strGuid)
         {
-            OrganisationModel Rst = new OrganisationModel();
+            GetOrganisationModel Rst = new GetOrganisationModel();
             try
             {
                 using (var connection = new  SqlConnection(_connectionString))
@@ -149,7 +149,7 @@ namespace DataAccessLayer.Implementation
                                 transaction: transaction,
                                 commandType: CommandType.StoredProcedure);
 
-                            var res = multi.Read<OrganisationModel>().First();
+                            var res = multi.Read<GetOrganisationModel>().First();
 
                             // Commit the transaction if everything is successful
                             transaction.Commit();
@@ -196,7 +196,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@PriEmailAddress", model.PriEmailAddress);
                     parameters.Add("@SecEmailAddress", model.SecEmailAddress);
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    parameters.Add("@CompanyLogo", model.Logo);
+                    parameters.Add("@CompanyLogo", model.Logo.FileName.Trim());
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@Guid", model.Guid);
