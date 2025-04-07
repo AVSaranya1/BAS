@@ -26,14 +26,16 @@ namespace WebApi.Controllers
         string token = string.Empty;
         string userGuid = string.Empty;
         private readonly IWebHostEnvironment _environment;
-        private readonly string _uploadFolder;
+        private readonly string _physicalPath;
+        private readonly string _virtualPath;
         public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService, IWebHostEnvironment environment) : base(configuration)
         {
             _logger = logger;
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _auditLogService = auditLogService;
             _environment = environment;
-            _uploadFolder= configuration["FileUpload:VirtualFilePath"] ?? "img";
+            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], "Org")??"/img";
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"],"Org")??"/img";
         }
 
         [HttpPost("InsertOrganisation")]
@@ -51,10 +53,10 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    if (!Directory.Exists(_uploadFolder))
-                        Directory.CreateDirectory(_uploadFolder);
+                    if (!Directory.Exists(_physicalPath))
+                        Directory.CreateDirectory(_physicalPath);
 
-                    var filePath = Path.Combine(_uploadFolder, orgModel.Logo.FileName.Trim());
+                    var filePath = Path.Combine(_physicalPath, orgModel.Logo.FileName.Trim());
                     if (System.IO.File.Exists(filePath))
                     {
                         System.IO.File.Delete(filePath);
@@ -64,7 +66,6 @@ namespace WebApi.Controllers
                         await orgModel.Logo.CopyToAsync(stream);
                     }
 
-                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{orgModel.Logo.FileName}";
                 }
                 
                 var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
@@ -96,16 +97,25 @@ namespace WebApi.Controllers
 
                 string token = string.Empty;
                 string userGuid = string.Empty;
-                if (!Directory.Exists(_uploadFolder))
-                    Directory.CreateDirectory(_uploadFolder);
+                if (!Directory.Exists(_virtualPath))
+                    Directory.CreateDirectory(_virtualPath);
                 // Retrieve session values if session exists
 
                 var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
                 foreach(var org in lsOrganisation)
                 {
-                    var filePath = Path.Combine(_uploadFolder, org.Logo);
-                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{org.Logo}";
-                    org.LogoUrl = fileUrl;
+                    string filePath = string.Empty;
+                    if (org.Logo != null && !string.IsNullOrEmpty(org.Logo))
+                    {
+                        filePath = Path.Combine(_virtualPath, org.Logo);
+                    }
+                    else
+                    {
+                        filePath = Path.Combine(_virtualPath, "nophoto.png");
+
+                    }
+                    
+                    org.LogoUrl= filePath;
                 }
 
                
@@ -185,9 +195,16 @@ namespace WebApi.Controllers
                 await _auditLogService.LogAction(userGuid, "GetOrganisationById", token);
                 if (objOrganisationModel != null)
                 {
-                    var filePath = Path.Combine(_uploadFolder, objOrganisationModel.Logo);
-                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{objOrganisationModel.Logo}";
-                    objOrganisationModel.LogoUrl = fileUrl;
+                    string filePath = string.Empty;
+                    if (objOrganisationModel.Logo != null && !string.IsNullOrEmpty(objOrganisationModel.Logo))
+                    { 
+                        filePath = Path.Combine(_virtualPath, objOrganisationModel.Logo);
+                    }
+                    else
+                    {
+                        filePath = Path.Combine(_virtualPath, "nophoto.png");
+                    }
+                    objOrganisationModel.LogoUrl= filePath;
                     return Ok(objOrganisationModel);
                 }
                 else
@@ -224,10 +241,10 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    if (!Directory.Exists(_uploadFolder))
-                        Directory.CreateDirectory(_uploadFolder);
+                    if (!Directory.Exists(_physicalPath))
+                        Directory.CreateDirectory(_physicalPath);
 
-                    var filePath = Path.Combine(_uploadFolder, Org.Logo.FileName);
+                    var filePath = Path.Combine(_physicalPath, Org.Logo.FileName);
                     if (System.IO.File.Exists(filePath))
                     {
                         System.IO.File.Delete(filePath);
@@ -237,8 +254,6 @@ namespace WebApi.Controllers
                     {
                         await Org.Logo.CopyToAsync(stream);
                     }
-
-                    var fileUrl = $"{Request.Scheme}://{Request.Host}/{_uploadFolder}/{Org.Logo.FileName}";
                 }
                 var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
                 await _auditLogService.LogAction("","UpdateOrganisation", token);
