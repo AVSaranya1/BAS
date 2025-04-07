@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Linq;
 using System.Text;
@@ -22,7 +24,43 @@ namespace DataAccessLayer.Model
         public string? PriEmailAddress { get; set; }
         public string? SecEmailAddress { get; set; }
         public string? CcEmailAddress { get; set; }
+        //public string? Logo { get; set; }
+       
+        public IFormFile Logo {  get; set; }
+        
+
+        public string? DBName { get; set; }
+        public long? DataLocationID { get; set; }
+        public string? SepPolling { get; set; }
+        public string? Active { get; set; }
+        public long? UserID { get; set; }
+
+        public DateTime? LastActiveDate { get; set; }
+        public string? Guid { get; set; }
+
+        //public DataTable? FunctionConfiguration { get; set; } // Matches utt_FunctionConfiguration
+        //public DataTable? Modules { get; set; } // Matches utt_FunctionConfiguration
+        //public DataTable? DeleteRecords { get; set; }
+
+        public List<DeleteRecord> DeleteRecords { get; set; } = new();
+        public List<FunctionConfiguration> FunctionConfigurations { get; set; } = new();
+    }
+    public class GetOrganisationModel
+    {
+        public long ID { get; set; }
+        public string? OrgCode { get; set; }
+        public string? OrgName { get; set; }
+        public string? Address { get; set; }
+        public string? Country { get; set; }
+        public string? PinCode { get; set; }
+        public string? PriContactNo { get; set; }
+        public string? SecContactNo { get; set; }
+        public string? PriEmailAddress { get; set; }
+        public string? SecEmailAddress { get; set; }
+        public string? CcEmailAddress { get; set; }
         public string? Logo { get; set; }
+        [NotMapped]
+        public string LogoUrl { get; set; }  // e.g., full URL built at runtime
         public string? DBName { get; set; }
         public long? DataLocationID { get; set; }
         public string? SepPolling { get; set; }
