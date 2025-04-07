@@ -1,17 +1,14 @@
-﻿using System.Data;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Text.Json.Serialization;
 using DataAccessLayer.Services;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace DataAccessLayer.Model
 {
     public class ForgotPasswordModel
     {
-        public int? ID
-        {
-            get;
-            set;
-        }
-
-        public string? UserName
+        public string? EmailID
         {
             get;
             set;
@@ -62,7 +59,7 @@ namespace DataAccessLayer.Model
             }
             return MailServerTable;
         }
-        public string Token { get; } = Guid.NewGuid().ToString("N"); //Auto Generated Token
+        
     }
     public class ForgotPasswordRequest
     {
@@ -76,10 +73,23 @@ namespace DataAccessLayer.Model
     }
     public class GetForgotPasswordModel
     {
-        public long? UserID { get; set; }
+        public Int64? UserID { get; set; }
         public string? UserName { get; set; }
-        public long? ID { get; set; }
+        public Int64? ID { get; set; }
     }
+    public class ForgotPassword
+    {
+        public string? UserName { get; set; }
+        [Required]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$",
+        ErrorMessage = "Password must be at least 6 characters long and contain at least one uppercase letter, one number, and one special character.")]
+        public string? Password { get; set; }
+        [Required]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$",
+        ErrorMessage = "Password must be at least 6 characters long and contain at least one uppercase letter, one number, and one special character.")]
+        public string? ConfirmPassword { get; set; }
+    }
+
 }
 
 
