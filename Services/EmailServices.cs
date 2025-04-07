@@ -6,6 +6,7 @@ using WebApi.Controllers;
 using MailKit.Net.Smtp;
 using MimeKit;
 using DataAccessLayer.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Services
 {
@@ -81,6 +82,45 @@ namespace WebApi.Services
                 _logger.LogError($"Error in SendMailMessageAsync: {ex.Message} - {ex.StackTrace}");
             }
             
+        }
+
+        public async Task<List<GetEmailTemplate?>> GetForgotPassword(string? TemplateCode, int? RefID, long? UserID, string? Password, ForgotPasswordRequest? forgotPasswordRequest = null)
+        {
+            List<GetEmailTemplate?> lstEmailTemplate = new List<GetEmailTemplate?>();
+            try
+            {
+                forgotPasswordRequest ??= new ForgotPasswordRequest
+                {
+                    ForgotPasswordModel = new ForgotPasswordModel(), // Prevents null reference
+                    _emailrepository = new EmailTemplate() // Ensures _emailrepository is not null
+                };
+                string StaffID = string.Empty;
+                string StrURL = string.Empty;
+
+                // Ensure forgotPasswordRequest._emailrepository is populated before usage
+                forgotPasswordRequest._emailrepository.TemplateCode = TemplateCode;
+                forgotPasswordRequest._emailrepository.UserID = UserID;
+                forgotPasswordRequest._emailrepository.RefID1 = RefID;
+                forgotPasswordRequest._emailrepository.EmployeeID = Password;
+
+                using (IUowEmailTemplate _repo = new UowEmailTemplate(ConnectionString))
+                {
+                    lstEmailTemplate = _repo.EmailTemplateDALRepo.GetEmailTemplate(forgotPasswordRequest._emailrepository);
+
+                    _repo.Commit();
+                    if(lstEmailTemplate!=null && lstEmailTemplate.Count > 0)
+                    {
+                        return lstEmailTemplate;
+                    }
+                    
+                }
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in SendMailMessageAsync: {ex.Message} - {ex.StackTrace}");
+            }
+            return lstEmailTemplate ?? new List<GetEmailTemplate>();
         }
 
         public async Task SendEmail(string? EmailID, string? Subject, string? Template, string? MobileContent, string? ApproverID, string? Templatecode, ForgotPasswordModel forgotPasswordModel)
