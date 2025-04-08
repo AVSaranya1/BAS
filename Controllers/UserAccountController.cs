@@ -6,6 +6,10 @@ using System.Data;
 using WebApi.Services;
 using DataAccessLayer.Services;
 using WebApi.Services.Interface;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+using System;
+using static DataAccessLayer.Model.TableVariables;
 
 namespace WebApi.Controllers
 {
@@ -18,10 +22,12 @@ namespace WebApi.Controllers
         private SessionService _sessionService;
         private readonly IAuditLogService _auditLogService;
         private GUID _guid;
-
+        private readonly IWebHostEnvironment _environment;
+        private readonly string _physicalPath;
+        private readonly string _virtualPath;
 
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor,IConfiguration configuration, SessionService sessionService, GUID guid, IAuditLogService auditLogService) : base(configuration)
+        public UserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor,IConfiguration configuration, SessionService sessionService, GUID guid, IAuditLogService auditLogService, IWebHostEnvironment environment) : base(configuration)
         {
             _emailService = emailServices;
             _logger = logger;
@@ -29,6 +35,9 @@ namespace WebApi.Controllers
             _sessionService = sessionService;
             _guid = guid;
             _auditLogService = auditLogService;
+            _environment = environment;
+            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], "UserImage") ?? "/img";
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"],"UserImage") ?? "img";
         }
         //List Page for User Creation
         [HttpGet("getAllUserAccount")]
@@ -47,6 +56,21 @@ namespace WebApi.Controllers
                         var lstUserAccountModel = await _repo.UserAccountDALRepo.GetAllUserAccount(userId);
                         if (lstUserAccountModel != null && lstUserAccountModel.Count > 0)
                         {
+                            string filePath = string.Empty;
+                            foreach (var org in lstUserAccountModel)
+                            {
+                                if(org.ProfileImg!=null && !string.IsNullOrEmpty(org.ProfileImg))
+                                {
+                                     filePath = Path.Combine(_virtualPath, org.ProfileImg);
+                                }
+                                else
+                                {
+                                    filePath = Path.Combine(_virtualPath, "nophoto.png");
+
+                                }
+                                
+                                org.ProfileImgUrl = filePath;
+                            }
                             return Ok(lstUserAccountModel);
                         }
                         else
@@ -234,6 +258,9 @@ namespace WebApi.Controllers
                                 }
                                 if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
                                 {
+                                    
+                                    string filePath = Path.Combine(_virtualPath, objuseraccountModel.userAccounts?.ProfileImg);
+                                    objuseraccountModel.userAccounts.ProfileImgUrl=filePath;
                                     response = new UserAccountResponse
                                     {
                                         User = objuseraccountModel.userAccounts,
@@ -469,6 +496,31 @@ namespace WebApi.Controllers
                     DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
                     DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
                     DataTable dataTableClientRole = objModel.UserAccount.ConvertToDataTable(userId, 0);
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+
+                    // Get file extension
+                    var extension = Path.GetExtension(objModel.UserAccount.ProfileImg.FileName).Trim().ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                    {
+                        return BadRequest("Invalid file type.");
+                    }
+                    else
+                    {
+                        if (!Directory.Exists(_physicalPath))
+                            Directory.CreateDirectory(_physicalPath);
+
+                        var filePath = Path.Combine(_physicalPath, objModel.UserAccount.ProfileImg.FileName.Trim());
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            System.IO.File.Delete(filePath);
+                        }
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await objModel.UserAccount.ProfileImg.CopyToAsync(stream);
+                        }
+
+                        
+                    }
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
@@ -522,7 +574,7 @@ namespace WebApi.Controllers
         }
         // Update User Account
         [HttpPut("updateUserAccount")]
-        public async Task<IActionResult> UpdateUserAccount([FromBody] UserAccountUpdateRequest userAccount)
+        public async Task<IActionResult> UpdateUserAccount([FromForm] UserAccountUpdateRequest userAccount)
         {
             if (userAccount == null && userAccount.UserAccount==null)
             {
@@ -561,6 +613,31 @@ namespace WebApi.Controllers
                             DataTable dataTable = userAccount.UserAccount.ConvertToDataTable(userAccount.OrgDataTable, userAccount.UserAccount.MasterGuid);
                             DataTable dataTableRole = userAccount.UserAccount.ConvertToDataTable(userAccount.RoleNameList, userId, userAccount.UserAccount.MasterGuid);
                             DataTable dataTableClientRole = userAccount.UserAccount.ConvertToDataTable(userId, userAccount.UserAccount.MasterGuid);
+                            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+
+                            // Get file extension
+                            var extension = Path.GetExtension(userAccount.UserAccount.ProfileImg.FileName).Trim().ToLowerInvariant();
+                            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                            {
+                                return BadRequest("Invalid file type.");
+                            }
+                            else
+                            {
+                                if (!Directory.Exists(_physicalPath))
+                                    Directory.CreateDirectory(_physicalPath);
+
+                                var filePath = Path.Combine(_physicalPath, userAccount.UserAccount.ProfileImg.FileName.Trim());
+                                if (System.IO.File.Exists(filePath))
+                                {
+                                    System.IO.File.Delete(filePath);
+                                }
+                                using (var stream = new FileStream(filePath, FileMode.Create))
+                                {
+                                    await userAccount.UserAccount.ProfileImg.CopyToAsync(stream);
+                                }
+
+                                
+                            }
                             using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                             {
                                 var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
@@ -685,7 +762,7 @@ namespace WebApi.Controllers
                 {
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                        string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
+                        string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         objModel.CreatedBy = userId;
                         
@@ -829,7 +906,7 @@ namespace WebApi.Controllers
         }
         // Reset Password in User Account
         [HttpPost("ResetPasswordInUserAccount")]
-        public async Task<IActionResult> ResetPasswordInUserAccount(ResetPassword objModel)
+        public async Task<IActionResult> ResetPasswordInUserAccount([FromQuery] ResetPassword objModel)
         {
             try
             {
@@ -840,15 +917,28 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
+
+                    string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!ModelState.IsValid)
                     {
-                        string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
-                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                        if (!string.IsNullOrEmpty(response))
+                        var errors = ModelState
+                            .Where(x => x.Value.Errors.Count > 0)
+                            .ToDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                            );
+
+                        return BadRequest(new { Message = "Validation failed", Errors = errors });
+                    }
+                    
+                    objModel.CreatedBy = userId;
+                        await _auditLogService.LogAction("", "ResetPasswordInUserAccount", "");
+                    if (objModel.Password == objModel.ConfirmPassword) 
+                    {
+                        using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                         {
-                            objModel.CreatedBy = userId;
-                            await _auditLogService.LogAction("", "ResetPasswordInUserAccount", "");
                             var result = await _repo.UserAccountDALRepo.ResetPasswordInUserAccount(objModel);
                             _repo.Commit();
                             if (result.PasswordReset != null)
@@ -862,9 +952,9 @@ namespace WebApi.Controllers
                                         responseMsg = result.Msg ?? string.Empty;
 
                                         await _emailService.SendMailMessage(EmailTemplateCode.RESET_PASSWORD,
-                                            -1,
-                                            userId,
-                                            objModel.Password);
+                                                                            -1,
+                                                                            userId,
+                                                                            objModel.Password);
                                         break;
 
                                     case -1://
@@ -876,14 +966,21 @@ namespace WebApi.Controllers
                                         return BadRequest();
                                 }
                             }
-                        }
-                        else
-                        {
-                            return BadRequest(Common.Messages.Login);
+
+                            else
+                            {
+                                return BadRequest(Common.Messages.Login);
+                            }
                         }
                     }
+                    else
+                    {
+                        return BadRequest(Common.Messages.ConfirmPasswordNotSame);
+                    }
+                        
+                    
+                    return Ok(responseMsg);
                 }
-                return Ok(responseMsg);
             }
             catch (Exception ex)
             {
@@ -907,7 +1004,7 @@ namespace WebApi.Controllers
                     var responseMsg = string.Empty;
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                        string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
+                        string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if (!string.IsNullOrEmpty(response))
