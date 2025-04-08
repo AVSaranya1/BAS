@@ -33,7 +33,7 @@ namespace WebApi.Controllers
             _httpContextAccessor= httpContextAccessor;
         }
         [HttpPost("InsertUpdateForgotPassword")]
-        public async Task<IActionResult> InsertUpdateForgotPassword([FromForm] ForgotPasswordModel objModel)
+        public async Task<IActionResult> InsertUpdateForgotPassword([FromQuery] ForgotPasswordModel objModel)
         {
             try
             {
@@ -104,79 +104,15 @@ namespace WebApi.Controllers
                         _SessionService.SetSession(Common.SessionVariables.UserName, objvalidatetoken.UserName??string.Empty);
                         _SessionService.SetSession(Common.SessionVariables.UserID, Convert.ToString(objvalidatetoken.UserID) ?? "0");
                         _SessionService.SetSession(Common.SessionVariables.Token,Convert.ToString(objvalidatetoken.ID) ??"0");
+                        _SessionService.SetSession(Common.SessionVariables.Guid, Convert.ToString(objvalidatetoken.UserGuid) ?? "");
+
                         return Ok(objvalidatetoken);
                     }
                     else
                     {
-                        return BadRequest();
+                        return BadRequest("Token Invalid");
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
-        //Reset Password
-        [HttpPost("ForgotPassword")]
-        public async Task<IActionResult> ForgotPassword([FromForm] ForgotPassword objModel)
-        {
-            try
-            {
-                if (objModel == null)
-                {
-                    return BadRequest("Invalid input data.");
-                }
-
-                else
-                {
-                    using (IUowForgotPassword _repo = new UowForgotPassword(_httpContextAccessor))
-                    {
-                        if (objModel.Password == objModel.ConfirmPassword) {
-                            var result = await _repo.ForgotPasswordDALRepo.ResetPassword(objModel);
-                            _repo.Commit();
-                            if (result.forgotPasswordModels != null)
-                            {
-                                switch (result.RetVal)
-                                {
-                                    case >= 1:// success
-
-                                        await _emailService.SendMailMessage(EmailTemplateCode.FORGOT_PASSWORD,
-                                                                            Convert.ToInt32(result.RetVal.ToString()),
-                                                                            Convert.ToInt64(result.Msg.ToString()),
-                                                                            string.Empty);
-                                        var emailTemplates = await _emailService.GetForgotPassword(EmailTemplateCode.FORGOT_PASSWORD,
-                                                                            Convert.ToInt32(result.RetVal.ToString()),
-                                                                            Convert.ToInt64(result.Msg.ToString()),
-                                                                            string.Empty);
-                                        if (emailTemplates == null || emailTemplates.Count == 0)
-                                        {
-                                            return NoContent(); // Returns HTTP 204 No Content
-                                        }
-
-                                        return Ok(emailTemplates);
-
-
-                                    case -1:// User Not Exists
-                                        return Ok(result.Msg);
-
-                                    default:
-                                        _logger.LogError(Environment.NewLine);
-                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateRole function in Role API controller");
-                                        return BadRequest();
-                                }
-                            }
-
-                        }
-                        else
-                        {
-                            return BadRequest(Common.Messages.ConfirmPasswordNotSame);
-                        }
-                        
-                    }
-                }
-                return Ok();
             }
             catch (Exception ex)
             {
