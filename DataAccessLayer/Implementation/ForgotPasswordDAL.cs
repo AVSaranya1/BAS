@@ -63,35 +63,6 @@ namespace DataAccessLayer.Implementation
                 return result.Read<GetForgotPasswordModel?>().FirstOrDefault();
             }
         }
-        public async Task<(ForgotPassword forgotPasswordModels, int RetVal, string Msg)> ResetPassword(ForgotPassword LM)
-        {
-            DynamicParameters parameters = new DynamicParameters();
-
-            parameters.Add("@UserName", LM.UserName);
-            parameters.Add("@Mode", Common.PageMode.RESET_PWD_MASTER);
-            parameters.Add("@Password", LM.Password);
-            parameters.Add("@RetVal", DbType.Int64, direction: ParameterDirection.Output);
-            parameters.Add("@RetMsg", DbType.String, direction: ParameterDirection.Output);
-
-            using var result = await Connection.QueryMultipleAsync("sp_ForgotPassword",
-                                                                        parameters,
-                                                                        transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure);
-
-            var forgotPasswordModels = result.Read<ForgotPassword>().FirstOrDefault();
-            // Ensure all result sets are consumed to retrieve the output parameters
-            while (!result.IsConsumed)
-            {
-                result.Read(); // Process remaining datasets
-            }
-
-            // Access the output parameters after consuming all datasets
-            int retVal = parameters.Get<int?>("@RetVal") ?? -4;
-            string msg = parameters.Get<string?>("@RetMsg") ?? "No Records Found";
-
-            // Return the roles list along with output parameters
-            return (forgotPasswordModels, retVal, msg);
-
-        }
+        
     }
 }
