@@ -278,7 +278,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
             parameters.Add("@ProfileID", model?.ProfileID);
-            parameters.Add("@ProfileImg", model?.ProfileImg);
+            parameters.Add("@ProfileImg", model?.ProfileImg?.FileName.Trim());
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@LastActiveDate", date?.ToString("yyyy-MM-dd"));
             parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
@@ -414,7 +414,7 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             clientParameters.Add("@UpdatedBy", model?.CreatedBy);
             clientParameters.Add("@ProfileID", model?.ProfileID);
-            clientParameters.Add("@ProfileImg", model?.ProfileImg);
+            clientParameters.Add("@ProfileImg", model?.ProfileImg?.FileName.Trim());
             clientParameters.Add("@EffectiveDate", model?.EffectiveDate);
             clientParameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             clientParameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model?.UserAccountRoleClientTable), DbType.String);
@@ -732,21 +732,21 @@ namespace DataAccessLayer.Implementation
 
                     DynamicParameters parameterPassword = new DynamicParameters();
 
-                parameterPassword.Add("@UserId", model?.UserId);
-                parameterPassword.Add("@UserName", model?.UserName);
-                parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
-                parameterPassword.Add("@Mode", Common.PageMode.UPDATE_USER_PASSWORD);
-                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
+                    parameterPassword.Add("@UserId", model?.UserId);
+                    parameterPassword.Add("@UserName", model?.UserName);
+                    parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                    parameterPassword.Add("@Mode", Common.PageMode.UPDATE_USER_PASSWORD);
+                    parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
 
-                using var vPasswordUpdate = await Connection.QueryMultipleAsync(
-                    "sp_UserAccountCreation",
-                    parameterPassword,
-                    transaction: Transaction,
-                    commandType: CommandType.StoredProcedure);
+                    using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+                                                    "sp_UserAccountCreation",
+                                                     parameterPassword,
+                                                     transaction: Transaction,
+                                                     commandType: CommandType.StoredProcedure);
 
-                model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
-                model.MasterGuid = UserGuid;
-            }
+                    model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
+                    model.MasterGuid = UserGuid;
+                }
                 
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (retVal >= 1)
@@ -991,8 +991,8 @@ namespace DataAccessLayer.Implementation
                 }
             }
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserID", model.UserId);
-            parameters.Add("@UserName", model.UserName);
+            
+            parameters.Add("@GuID", model.UserGuid);
             parameters.Add("@Password", EncryptShaAlg.Encrypt(model.Password));
             parameters.Add("@UpdatedBy", model.CreatedBy);
             parameters.Add("@Mode", Common.PageMode.RESET_PWD_MASTER);
@@ -1027,30 +1027,31 @@ namespace DataAccessLayer.Implementation
                     model.UserId = (long?)parameters.Get<int?>("@RetVal") ?? -4;
                     string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                     var UserGuid = parameters.Get<string?>("@UserGuid");
+                if (!string.IsNullOrEmpty(UserGuid))
+                {
                     var vPassword = model?.Password + UserGuid;
-
-
+                    model.Password = EncryptShaAlg.Encrypt(vPassword);
+                    model.UserGuid = UserGuid;
                     DynamicParameters parameterPassword = new DynamicParameters();
 
-                    parameterPassword.Add("@UserId", model?.UserId);
-                    parameterPassword.Add("@UserName", model?.UserName);
-                    parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                    
+                    parameterPassword.Add("@Guid",UserGuid);
+                    parameterPassword.Add("@Password", model.Password);
                     parameterPassword.Add("@Mode", Common.PageMode.UPDATE_USER_PASSWORD);
                     parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
 
                     using var vPasswordUpdate = await Connection.QueryMultipleAsync(
-                        "sp_UserAccountCreation",
-                        parameterPassword,
-                        transaction: Transaction,
-                        commandType: CommandType.StoredProcedure);
-
-                    model.Password = EncryptShaAlg.Encrypt(vPassword);
-                    model.UserGuid = UserGuid;
+                                                    "sp_UserAccountCreation",
+                                                     parameterPassword,
+                                                     transaction: Transaction,
+                                                     commandType: CommandType.StoredProcedure);
+                }
+                    
                     List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
-                    if (retVal >= 1)
+                    if (retVal >= 1 && !string.IsNullOrEmpty(UserGuid))
                     {
                         // 🌟 Fetch Org Details and Change Connection
-                        OrgDetails = await GetOrgDetailsByResetPasswordUserName(model.UserName);
+                        OrgDetails = await GetOrgDetailsByGUID(model.UserGuid);
                         if (OrgDetails != null && OrgDetails.Any())
                         {
                             var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
@@ -1096,13 +1097,11 @@ namespace DataAccessLayer.Implementation
         public async Task<(List<ResetPassword?> PasswordReset, long? RetVal, string? Msg)> ResetPasswordInClientUserAccount(ResetPassword model)
         {
             DynamicParameters clientparameters = new DynamicParameters();
-            clientparameters.Add("@UserID", model.UserId);
-            clientparameters.Add("@UserName", model.UserName);
+            
             clientparameters.Add("@Password", model.Password);
             clientparameters.Add("@UpdatedBy", model.CreatedBy);
             clientparameters.Add("@Mode", Common.PageMode.RESET_PWD_MASTER);
-            clientparameters.Add("@LevelID", model.LevelID);
-            clientparameters.Add("@LevelDetailID", model.LevelDetailID);
+            
             clientparameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             clientparameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             clientparameters.Add("@UserGuid", model.UserGuid);
