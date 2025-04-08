@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Text.Json.Serialization;
 
@@ -184,7 +187,7 @@ namespace DataAccessLayer.Model
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
         public DateOnly? UserExpiryDate { get; set; }
-        public string? ProfileImg {  get; set; }
+        public IFormFile? ProfileImg {  get; set; }
 
     }
    public class GetUserAccountModel
@@ -219,6 +222,8 @@ namespace DataAccessLayer.Model
         [JsonIgnore]
         public DateTime? UserExpiryDateTime { get; set; }
         public string? ProfileImg { get; set; }
+        [NotMapped]
+        public string? ProfileImgUrl { get; set; }  // e.g., full URL built at runtime
         public string? LanguageName { get; set; }
         public string? UserPolicyName { get; set; }
         public string? RoleName { get; set; }
@@ -228,7 +233,7 @@ namespace DataAccessLayer.Model
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
         public DataTable UserAccountRoleClientTable = new DataTable();
-        public string? ProfileImg { get; set; }
+        public IFormFile? ProfileImg { get; set; }
         public DataTable ConvertToDataTable(long CreatedBy, string GUid)
         {
 
@@ -500,16 +505,25 @@ namespace DataAccessLayer.Model
 
     public class ResetPassword
     {
-        [JsonIgnore]
+        [BindNever]
         public long? UserId { get; set; }
+        [BindNever]
         public string? UserName { get; set; }
+        [Required]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$",
+        ErrorMessage = "Password must be at least 6 characters long and contain at least one uppercase letter, one number, and one special character.")]
         public string? Password { get; set; }
-        [JsonIgnore]
+        [Required]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$",
+        ErrorMessage = "Password must be at least 6 characters long and contain at least one uppercase letter, one number, and one special character.")]
+        public string? ConfirmPassword { get; set; }
+        [BindNever]
         public long? CreatedBy { get; set; }
+        [BindNever]
         public long? LevelID { get; set; }
+        [BindNever]
         public long? LevelDetailID { get; set; }
-        
-        [JsonIgnore]
+
         public string? UserGuid { get; set; }
     }
     public class UserPolicyName
@@ -560,7 +574,9 @@ namespace DataAccessLayer.Model
         public string? TimeZone { get; set; }
         public string? LanguageName { get; set; }
         public long? LanguageID { get; set; }
-        public string? UserImage { get; set; }
+        public string? ProfileImg { get; set; }
+        public string? ProfileImgUrl { get; set; }
+
     }
     public class UserAccountResponse
     {
