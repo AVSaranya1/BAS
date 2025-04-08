@@ -76,6 +76,7 @@ namespace DataAccessLayer.Model
         public Int64? UserID { get; set; }
         public string? UserName { get; set; }
         public Int64? ID { get; set; }
+        public string? UserGuid { get; set; }
     }
     public class ForgotPassword
     {
