@@ -44,30 +44,32 @@ namespace WebApi.Controllers
             try
             {
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-
-                // Get file extension
-                var extension = Path.GetExtension(orgModel.Logo.FileName).Trim().ToLowerInvariant();
-                if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                string? fileName = orgModel.Logo?.FileName.Trim() ?? string.Empty;
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    return BadRequest("Invalid file type.");
-                }
-                else
-                {
-                    if (!Directory.Exists(_physicalPath))
-                        Directory.CreateDirectory(_physicalPath);
-
-                    var filePath = Path.Combine(_physicalPath, orgModel.Logo.FileName.Trim());
-                    if (System.IO.File.Exists(filePath))
+                    // Get file extension
+                    var extension = Path.GetExtension(orgModel.Logo.FileName).Trim().ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
                     {
-                        System.IO.File.Delete(filePath);
+                        return BadRequest("Invalid file type.");
                     }
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    else
                     {
-                        await orgModel.Logo.CopyToAsync(stream);
-                    }
+                        if (!Directory.Exists(_physicalPath))
+                            Directory.CreateDirectory(_physicalPath);
 
+                        var filePath = Path.Combine(_physicalPath, orgModel.Logo.FileName.Trim());
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            System.IO.File.Delete(filePath);
+                        }
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await orgModel.Logo.CopyToAsync(stream);
+                        }
+
+                    }
                 }
-                
                 var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
                 await _auditLogService.LogAction(userGuid, "InsertOrganisation", token);
 
@@ -231,28 +233,32 @@ namespace WebApi.Controllers
 
             try
             {
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-
-                // Get file extension
-                var extension = Path.GetExtension(Org.Logo.FileName).ToLowerInvariant();
-                if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                // var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var allowedExtensions = Common.FileExtensions.FileNameExtension;
+                string? fileName= Org.Logo?.FileName??string.Empty;
+                if (!string.IsNullOrEmpty(fileName))
                 {
-                    return BadRequest("Invalid file type.");
-                }
-                else
-                {
-                    if (!Directory.Exists(_physicalPath))
-                        Directory.CreateDirectory(_physicalPath);
-
-                    var filePath = Path.Combine(_physicalPath, Org.Logo.FileName);
-                    if (System.IO.File.Exists(filePath))
+                    // Get file extension
+                    var extension = Path.GetExtension(Org.Logo.FileName).ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
                     {
-                        System.IO.File.Delete(filePath);
+                        return BadRequest("Invalid file type.");
                     }
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    else
                     {
-                        await Org.Logo.CopyToAsync(stream);
+                        if (!Directory.Exists(_physicalPath))
+                            Directory.CreateDirectory(_physicalPath);
+
+                        var filePath = Path.Combine(_physicalPath, Org.Logo.FileName);
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            System.IO.File.Delete(filePath);
+                        }
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await Org.Logo.CopyToAsync(stream);
+                        }
                     }
                 }
                 var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
