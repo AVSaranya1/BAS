@@ -94,6 +94,10 @@ namespace DataAccessLayer.Model
             public const string CHECKUSEREXISTS = "CHECKUSEREXISTS";
             public const string VALIDATE_TOKEN= "VALIDATE_TOKEN";
         }
+        public class FileExtensions
+        {
+            public static readonly string[] FileNameExtension={ ".jpg", ".jpeg", ".png" };
+        }
     }
 
     public static class TableVariables
