@@ -50,7 +50,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@PriEmailAddress", model.PriEmailAddress);
                     parameters.Add("@SecEmailAddress", model.SecEmailAddress);
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    parameters.Add("@CompanyLogo", model.Logo.FileName.Trim());
+                    parameters.Add("@CompanyLogo", model.Logo?.FileName.Trim());
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Active", model.Active);
@@ -196,7 +196,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@PriEmailAddress", model.PriEmailAddress);
                     parameters.Add("@SecEmailAddress", model.SecEmailAddress);
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    parameters.Add("@CompanyLogo", model.Logo.FileName.Trim());
+                    parameters.Add("@CompanyLogo", model.Logo?.FileName.Trim());
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@Guid", model.Guid);
