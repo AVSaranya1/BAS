@@ -70,4 +70,15 @@ public class DropdownDAL : RepositoryBase,IDropdownDAL
             transaction: Transaction,
             commandType: CommandType.StoredProcedure);
     }
+
+    public async Task<IEnumerable<DropDownModel>> getEntityGroup()
+    {
+        DynamicParameters parameters = new DynamicParameters();
+        parameters.Add("@Mode", "Entity_Group");
+
+        return await Connection.QueryAsync<DropDownModel>("sp_ListData",
+            parameters,
+            transaction: Transaction,
+            commandType: CommandType.StoredProcedure);
+    }
 }
