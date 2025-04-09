@@ -198,4 +198,38 @@ public class DropdownController : ApiBaseController
             throw;
         }
     }
+
+    [HttpGet("EntityGroup")]
+    public async Task<IActionResult> getGetEntityGroup()
+    {
+        try
+        {
+            using (IUowDropdown _repo = new UowDropdown(_httpContextAccessor))
+            {
+                string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                if (!string.IsNullOrEmpty(response))
+                {
+                    await _auditLogService.LogAction("", "getGetEntityGroup", "");
+                    var lstDropdownModel = await _repo.MasterDALRepo.getEntityGroup();
+                    if (lstDropdownModel != null && lstDropdownModel.Count() > 0)
+                    {
+                        return Ok(lstDropdownModel);
+                    }
+                    else
+                    {
+                        return BadRequest(Common.Messages.NoRecordsFound);
+                    }
+                }
+                else
+                {
+                    return BadRequest(Common.Messages.Login);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message + "  " + ex.StackTrace);
+            throw;
+        }
+    }
 }
