@@ -26,7 +26,7 @@ namespace DataAccessLayer.Model
         public string? CcEmailAddress { get; set; }
         //public string? Logo { get; set; }
        
-        public IFormFile Logo {  get; set; }
+        public IFormFile? Logo {  get; set; }
         
 
         public string? DBName { get; set; }
