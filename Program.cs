@@ -115,7 +115,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true
         };
     });
-
+//  Add Swagger with Annotations
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Enable Annotations
+    options.EnableAnnotations();
+});
 builder.Services.AddScoped<GUID>();
 builder.Services.AddSingleton<AppGlobalVariableService>();
 //builder.Services.AddScoped<AppGlobalVariableService>();
