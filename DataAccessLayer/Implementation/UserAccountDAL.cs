@@ -232,7 +232,7 @@ namespace DataAccessLayer.Implementation
             }
         }
         // Insert or Update User, Then Change DB Connection
-        public async Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? model, string? file)
         {
             // To Check the DBName is in Default DB Name is Master DB
             if (_httpContextAccessor.HttpContext != null)
@@ -278,7 +278,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
             parameters.Add("@ProfileID", model?.ProfileID);
-            parameters.Add("@ProfileImg", model?.ProfileImg?.FileName.Trim());
+            parameters.Add("@ProfileImg", file);
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@LastActiveDate", date?.ToString("yyyy-MM-dd"));
             parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
@@ -360,7 +360,7 @@ namespace DataAccessLayer.Implementation
                                             {
                                                 UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
                                                 model.RoleID = 1;
-                                                var ClientResult = await InsertUpdateUserAccountClient(model);
+                                                var ClientResult = await InsertUpdateUserAccountClient(model,file);
                                             }
                                         }
                                     }
@@ -390,7 +390,7 @@ namespace DataAccessLayer.Implementation
             }
         }
         // To Insert into Client Database
-        public async Task<(List<UserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, long? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, long? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model, string? file)
         {
             DynamicParameters clientParameters = new DynamicParameters();
             clientParameters.Add("@UserId", model?.UserId);
@@ -414,7 +414,7 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             clientParameters.Add("@UpdatedBy", model?.CreatedBy);
             clientParameters.Add("@ProfileID", model?.ProfileID);
-            clientParameters.Add("@ProfileImg", model?.ProfileImg?.FileName.Trim());
+            clientParameters.Add("@ProfileImg", file);
             clientParameters.Add("@EffectiveDate", model?.EffectiveDate);
             clientParameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             clientParameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model?.UserAccountRoleClientTable), DbType.String);
@@ -649,7 +649,7 @@ namespace DataAccessLayer.Implementation
 
 
 
-        public async Task<List<OrgDetails?>> GetOrgDetailsByUserGUId()
+        public async Task<List<OrgDetails>> GetOrgDetailsByUserGUId()
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", 0);
@@ -658,14 +658,14 @@ namespace DataAccessLayer.Implementation
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            var res = multi.Read<OrgDetails?>().ToList();
+            var res = multi.Read<OrgDetails>().ToList();
 
             return res;
 
         }
 
 
-        public async Task<(List<UpdateUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateUserAccountModel? model)
+        public async Task<(List<UpdateUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateUserAccountModel? model, string? formFile)
         {
             // To Check the DBName is in Default DB Name is Master DB
             var httpContext = _httpContextAccessor.HttpContext;
@@ -707,7 +707,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@GuId", model?.MasterGuid);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-            parameters.Add("@ProfileImg", model?.ProfileImg);
+            parameters.Add("@ProfileImg", formFile);
             parameters.Add("@Mode", Common.PageMode.EDIT);
             using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
@@ -777,7 +777,7 @@ namespace DataAccessLayer.Implementation
                                                 && (org.ConPassword != null && org.ConPassword != string.Empty))
                                             {
                                                 UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
-                                                var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model);
+                                                var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model, formFile);
                                             }
                                         }
                                     }
@@ -800,7 +800,7 @@ namespace DataAccessLayer.Implementation
         
         
         //To Edit the Data in Client DB
-        public async Task<(List<UpdateUserAccountModel?> updateClientuseraccount, long? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UpdateUserAccountModel? model)
+        public async Task<(List<UpdateUserAccountModel?> updateClientuseraccount, long? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UpdateUserAccountModel? model, string formFile)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", model?.UserId);
@@ -819,7 +819,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            parameters.Add("@ProfileImg", model?.ProfileImg);
+            parameters.Add("@ProfileImg", formFile);
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
