@@ -43,7 +43,8 @@ namespace WebApi.Controllers
         {
             try
             {
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                //var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                var allowedExtensions = Common.FileExtensions.FileNameExtension;
                 string? fileName = orgModel.Logo?.FileName.Trim() ?? string.Empty;
                 if (!string.IsNullOrEmpty(fileName))
                 {
@@ -57,7 +58,6 @@ namespace WebApi.Controllers
                     {
                         if (!Directory.Exists(_physicalPath))
                             Directory.CreateDirectory(_physicalPath);
-
                         var filePath = Path.Combine(_physicalPath, orgModel.Logo.FileName.Trim());
                         if (System.IO.File.Exists(filePath))
                         {
@@ -107,13 +107,13 @@ namespace WebApi.Controllers
                 foreach(var org in lsOrganisation)
                 {
                     string filePath = string.Empty;
-                    if (org.Logo != null && !string.IsNullOrEmpty(org.Logo))
+                    if (!string.IsNullOrEmpty(org.Logo))
                     {
                         filePath = Path.Combine(_virtualPath, org.Logo);
                     }
                     else
                     {
-                        filePath = Path.Combine(_virtualPath, "nophoto.png");
+                        filePath = Path.Combine(Path.GetDirectoryName(_virtualPath), Common.FileName.noPhoto);
 
                     }
                     
@@ -147,6 +147,30 @@ namespace WebApi.Controllers
                 var objOrganisationModel = await _repository.OrganisationDALRepo.DataLocationInDropdown();
                 // Log the action before returning response
                 await _auditLogService.LogAction("", "DataLocationInDropdown", token);
+                if (objOrganisationModel != null)
+                {
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
+        [HttpGet("IndustryInDropdown")]
+        public async Task<IActionResult> IndustryInDropdown()
+        {
+            try
+            {
+                var objOrganisationModel = await _repository.OrganisationDALRepo.IndustryDropdown();
+                // Log the action before returning response
+                await _auditLogService.LogAction("", "IndustryDropdown", token);
                 if (objOrganisationModel != null)
                 {
                     return Ok(objOrganisationModel);
@@ -204,7 +228,9 @@ namespace WebApi.Controllers
                     }
                     else
                     {
-                        filePath = Path.Combine(_virtualPath, "nophoto.png");
+                        //Refers Previous Path
+                        filePath = Path.Combine(Path.GetDirectoryName(_virtualPath),Common.FileName.noPhoto);
+
                     }
                     objOrganisationModel.LogoUrl= filePath;
                     return Ok(objOrganisationModel);
