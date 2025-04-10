@@ -21,7 +21,7 @@ namespace DataAccessLayer.Model
         public bool? IsChild { get; set; }
         public string? ParentEntityGroupGuid { get; set; }
         public string? IsProject { get; set; }
-        public long? ModifiedBy { get; set; }
+        public string? ModifiedBy { get; set; }
         public string? UserGuid { get; set; }
         public string? ModifiedDateTime { get; set; }
         public string? CreatedUTCDateTime { get; set; }
