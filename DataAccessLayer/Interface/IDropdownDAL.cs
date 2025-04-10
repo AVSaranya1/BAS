@@ -7,4 +7,5 @@ public interface IDropdownDAL
     Task<IEnumerable<DropDownModel>> getCountry();
     Task<IEnumerable<DropDownModel>> getCurrency();
     Task<IEnumerable<TimezoneModel>> getTimeZone(long? RefID1);
+    Task<IEnumerable<DropDownModel>> getEntityGroup();
 }
