@@ -13,8 +13,9 @@ namespace DataAccessLayer.Model
         public string? Mode { get; set; }
         public long? ID { get; set; }
         public long? ParentID { get; set; }
-        public string? Guid { get; set; }
+        public Guid? Guid { get; set; }
         public string? EntityGroupCode { get; set; }
+        public string? EntityGroupName { get; set; }
         public string? EntityGroupDesc { get; set; }
         public string? Logo { get; set; }
         public bool? IsChild { get; set; }
@@ -33,6 +34,6 @@ namespace DataAccessLayer.Model
     public class EntityGroupDel
     {
         public long? ID { get; set; }
-        public string? Guid { get; set; }
+        public Guid? Guid { get; set; }
     }
 }
