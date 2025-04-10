@@ -24,24 +24,19 @@ namespace DataAccessLayer.Model
         public string? PriEmailAddress { get; set; }
         public string? SecEmailAddress { get; set; }
         public string? CcEmailAddress { get; set; }
-        //public string? Logo { get; set; }
-       
         public IFormFile? Logo {  get; set; }
-        
-
         public string? DBName { get; set; }
         public long? DataLocationID { get; set; }
         public string? SepPolling { get; set; }
         public string? Active { get; set; }
         public long? UserID { get; set; }
-
         public DateTime? LastActiveDate { get; set; }
         public string? Guid { get; set; }
 
         //public DataTable? FunctionConfiguration { get; set; } // Matches utt_FunctionConfiguration
         //public DataTable? Modules { get; set; } // Matches utt_FunctionConfiguration
         //public DataTable? DeleteRecords { get; set; }
-
+        public long? IndustryID { get; set; }
         public List<DeleteRecord> DeleteRecords { get; set; } = new();
         public List<FunctionConfiguration> FunctionConfigurations { get; set; } = new();
     }
@@ -69,6 +64,8 @@ namespace DataAccessLayer.Model
 
         public DateTime? LastActiveDate { get; set; }
         public string? Guid { get; set; }
+        public long? IndustryID { get; set; }
+        public string? IndustryName { get; set; }
 
         //public DataTable? FunctionConfiguration { get; set; } // Matches utt_FunctionConfiguration
         //public DataTable? Modules { get; set; } // Matches utt_FunctionConfiguration
