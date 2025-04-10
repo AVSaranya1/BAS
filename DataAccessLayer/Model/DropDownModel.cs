@@ -2,6 +2,7 @@
 public class DropDownModel
 {
     public string value { get; set; }
-    public string text { get; set; } = string.Empty;   
+    public long? id { get; set; }
+    public string text { get; set; } = string.Empty;
 }
     
