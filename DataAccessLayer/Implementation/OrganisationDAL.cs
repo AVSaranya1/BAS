@@ -56,7 +56,6 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@IndustryID", model.IndustryID);
                     parameters.Add("@Mode", Common.PageMode.ADD);
-                    parameters.Add("@DataLocationID", model.DataLocationID);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                     await connection.ExecuteAsync(
@@ -203,7 +202,6 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@Guid", model.Guid);
                     parameters.Add("@IndustryID", model.IndustryID);
-                    parameters.Add("@DataLocationID", model.DataLocationID);
                     parameters.Add("@Mode", Common.PageMode.EDIT);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);

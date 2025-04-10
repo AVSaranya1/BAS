@@ -33,11 +33,12 @@ namespace DataAccessLayer.Implementation
                   
                     parameters.Add("@Mode", Common.PageMode.ADD);
                     parameters.Add("@EntityGroupCode", entityGroupModel.EntityGroupCode);
+                    parameters.Add("@EntityGroupName", entityGroupModel.EntityGroupName);
                     parameters.Add("@EntityGroupDesc", entityGroupModel.EntityGroupDesc);
                     parameters.Add("@Logo", entityGroupModel.Logo);
                     parameters.Add("@IsChild", entityGroupModel.IsChild);
                     //parameters.Add("@ParentGuid", entityGroupModel.ParentEntityGroupGuid);
-                    parameters.Add("@ParentEntityID", entityGroupModel.ParentID);
+                    parameters.Add("@ParentID", entityGroupModel.ParentID);
                     parameters.Add("@CreatedBy", entityGroupModel.CreatedBy);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
@@ -74,11 +75,12 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@Mode", entityGroupModel.Mode);
                     parameters.Add("@EntityGroupCode", entityGroupModel.EntityGroupCode);
                     parameters.Add("@ID", entityGroupModel.ID);
+                    parameters.Add("@EntityGroupName", entityGroupModel.EntityGroupName);
                     parameters.Add("@EntityGroupDesc", entityGroupModel.EntityGroupDesc);
                     parameters.Add("@Logo", entityGroupModel.Logo);
                     parameters.Add("@IsChild", entityGroupModel.IsChild);
                     //parameters.Add("@ParentGuid", entityGroupModel.ParentEntityGroupGuid);
-                    parameters.Add("@ParentEntityID", entityGroupModel.ParentID);
+                    parameters.Add("@ParentID", entityGroupModel.ParentID);
                     parameters.Add("@Guid", entityGroupModel.Guid);
                     parameters.Add("@CreatedBy", entityGroupModel.CreatedBy);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
@@ -116,21 +118,29 @@ namespace DataAccessLayer.Implementation
 
                     // Table-Valued Parameter (TVP)
                     var table = new DataTable();
-                    table.Columns.Add("ID", typeof(long));               // Matches BIGINT
-                    table.Columns.Add("Guid", typeof(string));               // Matches NVARCHAR(50)
+                    table.Columns.Add("ID", typeof(long));
+                    table.Columns.Add("Guid", typeof(Guid));
 
-                    if (lstEntityGroupDel != null)  // Ensure list is not null
+                    if (lstEntityGroupDel != null)
                     {
-                        foreach (var item in lstEntityGroupDel)  // Directly iterate over the list
+                        foreach (var item in lstEntityGroupDel)
                         {
+                            Guid parsedGuid = Guid.Empty;
 
-                            table.Rows.Add(item.ID,item.Guid);
+                            // Convert the nullable Guid to string first
+                            var guidStr = item.Guid?.ToString();
+
+                            if (!string.IsNullOrWhiteSpace(guidStr))
+                            {
+                                Guid.TryParse(guidStr, out parsedGuid);
+                            }
+
+                            table.Rows.Add(item.ID, parsedGuid);
                         }
                     }
 
-
                     // Ensure you pass the correct table type name
-                    parameters.Add("@dtLevelInfo", table.AsTableValuedParameter("dbo.utt_DeleteGuid"));
+                    parameters.Add("@dtDeleteId", table.AsTableValuedParameter("dbo.utt_DeleteGuid"));
                     parameters.Add("@Mode", "DELETE");
                     parameters.Add("@ModifiedBy", strUserGuid);
                     parameters.Add("@Msg", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);

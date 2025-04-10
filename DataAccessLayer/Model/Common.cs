@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -117,5 +119,21 @@ namespace DataAccessLayer.Model
             public const string Guid = "Guid";
         }
     }
-    
+
+    public static class Messages
+    {
+       
+        public const string MSG_ADD_FAIL = "Failed to add Entity Group";
+        public const string MSG_REC_EXISTS_CODE = "Record already exists! Please verify the code.";
+        public const string MSG_NO_RECORD = "No Record(s) Found!";
+        public const string MSG_SAVE_SUCCESS = "Record(s) saved successfully!";
+        public const string MSG_UPDATED_SUCCESS = "Record(s) updated successfully!";
+        public const string MSG_ADDED_SUCCESS = "Record(s) added successfully!";
+        public const string MSG_ADD_SUCCESS = "Record added successfully!<br />Continue to add new record or click on Cancel to return to listing.";
+        public const string MSG_EDIT_FAIL = "Reference found.Unable to update the selected record(s).";
+        public const string MSG_EDIT_SUCCESS = "Record edited successfully!";
+        public const string MSG_UPDATE_CONFIG_SUCCESS = "Record updated successfully!<br />Continue to update the record or click on Cancel.";
+        public const string MSG_REC_EXISTS = "Record already exists!<br />Change the value(s) and save the record or click on Cancel to return to listing.";
+
+    }
 }

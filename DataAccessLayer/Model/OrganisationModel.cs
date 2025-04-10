@@ -99,7 +99,7 @@ namespace DataAccessLayer.Model
     }
     public class DataLocationDropdown
     {
-        public long id { get; set; }
+        public long Value { get; set; }
         public string? Text { get; set; }
     }
     public class OrganisationModules
