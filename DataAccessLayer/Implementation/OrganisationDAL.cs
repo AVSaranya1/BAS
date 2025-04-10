@@ -54,6 +54,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Active", model.Active);
+                    parameters.Add("@IndustryID", model.IndustryID);
                     parameters.Add("@Mode", Common.PageMode.ADD);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
@@ -200,6 +201,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@Guid", model.Guid);
+                    parameters.Add("@IndustryID", model.IndustryID);
                     parameters.Add("@Mode", Common.PageMode.EDIT);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
@@ -295,6 +297,54 @@ namespace DataAccessLayer.Implementation
                             //transaction.Commit();
 
                             return multi.Read<DataLocationDropdown>().ToList();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error: {ex.Message}");
+                return lstResult;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return lstResult;
+            }
+
+        }
+
+        public async Task<List<DropDownModel>> IndustryDropdown()
+        {
+            List<DropDownModel> lstResult = new List<DropDownModel>();
+            try
+            {
+
+                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            DynamicParameters parameters = new DynamicParameters();
+                            parameters.Add("@Mode", Common.PageMode.GET_INDUSTRY_DROPDOWN);
+
+                            var multi = await connection.QueryMultipleAsync(
+                                "sp_ListData",
+                                parameters,
+                                transaction: transaction,
+                                commandType: CommandType.StoredProcedure);
+
+                            //transaction.Commit();
+
+                            return multi.Read<DropDownModel>().ToList();
                         }
                         catch
                         {
