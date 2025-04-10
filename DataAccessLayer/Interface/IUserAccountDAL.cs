@@ -1,4 +1,5 @@
 ﻿using DataAccessLayer.Model;
+using Microsoft.AspNetCore.Http;
 
 namespace DataAccessLayer.Interface
 {
@@ -13,7 +14,7 @@ namespace DataAccessLayer.Interface
 
         Task<List<GetRoleName?>> getAllUserRoleInDropdown();
         Task<(List<UserAccountModel?> InsertedUsers,  long? RetVal, string? Msg)> InsertCheckUserAccount(UserAccountModel? model);
-        Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? UM);
+        Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? UM, string? file);
 
         Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleInUserAccount(DeleteRoleName RM);
 
@@ -24,9 +25,9 @@ namespace DataAccessLayer.Interface
 
         Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByGUId(string? GUId);
         Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> ViewUserAccountByGUId(string? GUId);
-        Task<List<OrgDetails?>> GetOrgDetailsByUserGUId();
+        Task<List<OrgDetails>> GetOrgDetailsByUserGUId();
 
-        Task<(List<UpdateUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateUserAccountModel? userAccount);
+        Task<(List<UpdateUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateUserAccountModel? userAccount, string? formFile);
 
         Task<(List<UnlockUser?> unlockuser, int? RetVal, string? Msg)> UnlockUserAsync(UnlockUser? model);
     }
