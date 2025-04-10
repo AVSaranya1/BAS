@@ -9,7 +9,8 @@ using WebApi.Services.Interface;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System;
-using static DataAccessLayer.Model.TableVariables;
+using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace WebApi.Controllers
 {
@@ -59,13 +60,13 @@ namespace WebApi.Controllers
                             string filePath = string.Empty;
                             foreach (var org in lstUserAccountModel)
                             {
-                                if(org.ProfileImg!=null && !string.IsNullOrEmpty(org.ProfileImg))
+                                if(!string.IsNullOrEmpty(org?.ProfileImg))
                                 {
                                      filePath = Path.Combine(_virtualPath, org.ProfileImg);
                                 }
                                 else
                                 {
-                                    filePath = Path.Combine(_virtualPath, "nophoto.png");
+                                    filePath = Path.Combine(Path.GetDirectoryName(_virtualPath),Common.FileName.noPhoto);
 
                                 }
                                 
@@ -258,8 +259,16 @@ namespace WebApi.Controllers
                                 }
                                 if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
                                 {
-                                    
-                                    string filePath = Path.Combine(_virtualPath, objuseraccountModel.userAccounts?.ProfileImg);
+                                    string filePath = string.Empty;
+                                    if(!string.IsNullOrEmpty(objuseraccountModel.userAccounts?.ProfileImg))
+                                    {
+                                        filePath = Path.Combine(_virtualPath, objuseraccountModel.userAccounts?.ProfileImg);
+                                    }
+                                    else
+                                    {
+                                        filePath = Path.Combine(Path.GetDirectoryName(_virtualPath), Common.FileName.noPhoto);
+                                            
+                                    }
                                     objuseraccountModel.userAccounts.ProfileImgUrl=filePath;
                                     response = new UserAccountResponse
                                     {
@@ -444,25 +453,37 @@ namespace WebApi.Controllers
         }
         //Insert New User Account Creation
         [HttpPost("insertUserAccount")]
-        public async Task<IActionResult> InsertUserAccount(UserAccountInsertRequest objModel)
+        
+        public async Task<IActionResult> InsertUserAccount(IFormFile? ProfileImage, [FromQuery] UserAccountModel objModel, [FromQuery] string OrgDataTable = "[{\"OrgName\": \"string\", \"EffectiveDateOrg\": \"2025-04-09T15:01:11.712Z\", \"ActiveOrg\": \"string\"}]",
+        [FromQuery] string RoleNameList = "[{\"roleID\": 0,\"roleNameEffectiveDate\": \"2025-04-09\"}]")
         {
             try
             {
+                List<UserAccountOrgDatatable> orgDataList = new List<UserAccountOrgDatatable>();
+                List<RoleNameInUserAccount> roleDataList = new List<RoleNameInUserAccount>();
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
+                if (!Request.HasFormContentType)
+                {
+                    return BadRequest("Unsupported media type, expected multipart/form-data.");
+                }
 
+                var form = await Request.ReadFormAsync();
+                var file = form.Files.FirstOrDefault();
                 string responseMsg = string.Empty;
-                if (objModel == null || objModel.UserAccount == null || objModel.OrgDataTable == null || objModel.RoleNameList == null)
+                if (objModel == null)
                 {
                     return BadRequest("Invalid input data.");
                 }
-                else if (objModel?.UserAccount?.Active != "Y" && objModel?.UserAccount?.Active != "N")
+                else if (objModel?.Active != "Y" && objModel?.Active != "N")
                 {
                     return BadRequest("UserAccount Active  invalid. Only 'Y' or 'N' are allowed.");
                 }
-                foreach (var org in objModel.OrgDataTable)
+                orgDataList = JsonConvert.DeserializeObject<List<UserAccountOrgDatatable>>(OrgDataTable);
+                roleDataList = JsonConvert.DeserializeObject<List<RoleNameInUserAccount>>(RoleNameList);
+                foreach (var org in orgDataList)
                 {
                     // Check if ActiveOrg is neither "Y" nor "N" and is not null
                     var activeOrg = org?.ActiveOrg;
@@ -474,11 +495,11 @@ namespace WebApi.Controllers
                 string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                 long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                 string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                objModel.UserAccount.CreatedBy = userId;
+                objModel.CreatedBy = userId;
                 if (!string.IsNullOrEmpty(response))
                 {
                     await _auditLogService.LogAction("", "InsertUserAccount", "");
-                    foreach (var GuidOrg in objModel.OrgDataTable)
+                    foreach (var GuidOrg in orgDataList)
                     {
                         if (GuidOrg?.OrgName != "string" || GuidOrg?.OrgName == "string")
                         {
@@ -493,37 +514,40 @@ namespace WebApi.Controllers
                             }
                         }
                     }
-                    DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
-                    DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
-                    DataTable dataTableClientRole = objModel.UserAccount.ConvertToDataTable(userId, 0);
-                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-
-                    // Get file extension
-                    var extension = Path.GetExtension(objModel.UserAccount.ProfileImg.FileName).Trim().ToLowerInvariant();
-                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                    DataTable dataTable = objModel.ConvertToDataTable(orgDataList, 0);
+                    DataTable dataTableRole = objModel.ConvertToDataTable(roleDataList, userId, 0);
+                    DataTable dataTableClientRole = objModel.ConvertToDataTable(userId, 0);
+                    var allowedExtensions = Common.FileExtensions.FileNameExtension;
+                    string? FileName = ProfileImage?.FileName.Trim() ?? string.Empty;
+                    string? ImageUpdated = string.Empty;
+                    if (!string.IsNullOrEmpty(FileName))
                     {
-                        return BadRequest("Invalid file type.");
-                    }
-                    else
-                    {
-                        if (!Directory.Exists(_physicalPath))
-                            Directory.CreateDirectory(_physicalPath);
-
-                        var filePath = Path.Combine(_physicalPath, objModel.UserAccount.ProfileImg.FileName.Trim());
-                        if (System.IO.File.Exists(filePath))
+                        // Get file extension
+                        var extension = Path.GetExtension(ProfileImage.FileName).Trim().ToLowerInvariant();
+                        if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
                         {
-                            System.IO.File.Delete(filePath);
+                            return BadRequest("Invalid file type. Allowed Files types"+ Common.FileExtensions.FileNameExtension);
                         }
-                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        else
                         {
-                            await objModel.UserAccount.ProfileImg.CopyToAsync(stream);
+                            if (!Directory.Exists(_physicalPath))
+                                Directory.CreateDirectory(_physicalPath);
+                            string UniqueName = Path.ChangeExtension(Path.GetRandomFileName(), extension);
+                            var filePath = Path.Combine(_physicalPath, UniqueName);
+                            if (System.IO.File.Exists(filePath))
+                            {
+                                System.IO.File.Delete(filePath);
+                            }
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await ProfileImage.CopyToAsync(stream);
+                            }
+                            ImageUpdated=ProfileImage?.FileName.Replace(FileName, UniqueName);
                         }
-
-                        
                     }
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                        var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
+                        var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel, ImageUpdated);
                         _repo.Commit();
                         if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
                         {
@@ -543,7 +567,7 @@ namespace WebApi.Controllers
                                         responseMsg = result.Msg ?? string.Empty;
                                         await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
                                                                             result.RetVal,
-                                                                            objModel.UserAccount.UserPassword);
+                                                                            objModel.UserPassword);
 
                                         break;
 
@@ -574,9 +598,13 @@ namespace WebApi.Controllers
         }
         // Update User Account
         [HttpPut("updateUserAccount")]
-        public async Task<IActionResult> UpdateUserAccount([FromForm] UserAccountUpdateRequest userAccount)
+        
+        public async Task<IActionResult> UpdateUserAccount(IFormFile? ProfileImage, [FromQuery] UpdateUserAccountModel userAccount, [FromQuery] string OrgDataTable = "[{\"OrgName\": \"string\", \"EffectiveDateOrg\": \"2025-04-09T15:01:11.712Z\", \"ActiveOrg\": \"string\"}]",
+        [FromQuery] string RoleNameList = "[{\"roleID\": 0,\"roleNameEffectiveDate\": \"2025-04-09\"}]")
         {
-            if (userAccount == null && userAccount.UserAccount==null)
+            List<UserAccountOrgDatatable> orgDataList = new List<UserAccountOrgDatatable>();
+            List<RoleNameInUserAccount> roleDataList = new List<RoleNameInUserAccount>();
+            if (userAccount == null)
             {
                 return BadRequest("Invalid input data.");
             }
@@ -584,18 +612,28 @@ namespace WebApi.Controllers
             {
                 try
                 {
+                    orgDataList = JsonConvert.DeserializeObject<List<UserAccountOrgDatatable>>(OrgDataTable);
+                    roleDataList = JsonConvert.DeserializeObject<List<RoleNameInUserAccount>>(RoleNameList);
                     string responseMsg = string.Empty;
+                    string? ImageUpdated = string.Empty;
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    userAccount.UserAccount.CreatedBy = userId;
+                    userAccount.CreatedBy = userId;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        await _auditLogService.LogAction("", "updateUserAccount", "");
-                        string? guidresp = await _guid.GetGUIDBasedOnUserGuid(userAccount.UserAccount.MasterGuid);
-                        if (userAccount.UserAccount.MasterGuid == guidresp)
+                        if (!Request.HasFormContentType)
                         {
-                            foreach (var org in userAccount.OrgDataTable)
+                            return BadRequest("Unsupported media type, expected multipart/form-data.");
+                        }
+
+                        var form = await Request.ReadFormAsync();
+                        var file = form.Files.FirstOrDefault();
+                        await _auditLogService.LogAction("", "updateUserAccount", "");
+                        string? guidresp = await _guid.GetGUIDBasedOnUserGuid(userAccount.MasterGuid);
+                        if (userAccount.MasterGuid == guidresp)
+                        {
+                            foreach (var org in orgDataList)
                             {
                                 if (org?.OrgName != "string" || org?.OrgName == "string")
                                 {
@@ -610,37 +648,41 @@ namespace WebApi.Controllers
                                     return BadRequest("OrgName should not be empty");
                                 }
                             }
-                            DataTable dataTable = userAccount.UserAccount.ConvertToDataTable(userAccount.OrgDataTable, userAccount.UserAccount.MasterGuid);
-                            DataTable dataTableRole = userAccount.UserAccount.ConvertToDataTable(userAccount.RoleNameList, userId, userAccount.UserAccount.MasterGuid);
-                            DataTable dataTableClientRole = userAccount.UserAccount.ConvertToDataTable(userId, userAccount.UserAccount.MasterGuid);
-                            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-
-                            // Get file extension
-                            var extension = Path.GetExtension(userAccount.UserAccount.ProfileImg.FileName).Trim().ToLowerInvariant();
-                            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                            DataTable dataTable = userAccount.ConvertToDataTable(orgDataList, userAccount.MasterGuid);
+                            DataTable dataTableRole = userAccount.ConvertToDataTable(roleDataList, userId, userAccount.MasterGuid);
+                            DataTable dataTableClientRole = userAccount.ConvertToDataTable(userId, userAccount.MasterGuid);
+                            var allowedExtensions = Common.FileExtensions.FileNameExtension;
+                            string? FileName = ProfileImage?.FileName.Trim()??string.Empty;
+                            if(!string.IsNullOrEmpty(FileName))
                             {
-                                return BadRequest("Invalid file type.");
-                            }
-                            else
-                            {
-                                if (!Directory.Exists(_physicalPath))
-                                    Directory.CreateDirectory(_physicalPath);
-
-                                var filePath = Path.Combine(_physicalPath, userAccount.UserAccount.ProfileImg.FileName.Trim());
-                                if (System.IO.File.Exists(filePath))
+                                // Get file extension
+                                var extension = Path.GetExtension(ProfileImage.FileName).Trim().ToLowerInvariant();
+                                if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
                                 {
-                                    System.IO.File.Delete(filePath);
+                                    return BadRequest("Invalid file type." + Common.FileExtensions.FileNameExtension);
                                 }
-                                using (var stream = new FileStream(filePath, FileMode.Create))
+                                else
                                 {
-                                    await userAccount.UserAccount.ProfileImg.CopyToAsync(stream);
-                                }
+                                    if (!Directory.Exists(_physicalPath))
+                                        Directory.CreateDirectory(_physicalPath);
+                                    string UniqueName=Path.ChangeExtension(Path.GetRandomFileName(), extension);
 
-                                
+                                    var filePath = Path.Combine(_physicalPath, UniqueName);
+                                    if (System.IO.File.Exists(filePath))
+                                    {
+                                        System.IO.File.Delete(filePath);
+                                    }
+                                    using (var stream = new FileStream(filePath, FileMode.Create))
+                                    {
+                                        await ProfileImage.CopyToAsync(stream);
+                                    }
+                                    ImageUpdated=ProfileImage?.FileName.Replace(FileName, UniqueName);
+                                }
                             }
+                            
                             using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                             {
-                                var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
+                                var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount, ImageUpdated);
                                 _repo.Commit();
                                 if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
                                 {
