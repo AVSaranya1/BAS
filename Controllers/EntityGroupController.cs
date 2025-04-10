@@ -42,15 +42,12 @@ namespace WebApi.Controllers
 
                 var lsOrganisation = await _repository.entityGroupRepo.GetEntityGroup(entityGroupModel);
                 await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
-
-                if (lsOrganisation != null)
+                return lsOrganisation switch
                 {
-                    return Ok(lsOrganisation);
-                }
-                else
-                {
-                    return BadRequest();
-                }
+                    not null => Ok(lsOrganisation),
+                    _ => BadRequest()
+                };
+                
             }
             catch (Exception ex)
             {
@@ -76,14 +73,11 @@ namespace WebApi.Controllers
                 var lsOrganisation = await _repository.entityGroupRepo.GetEntityGroupDetails(entityGroupModel);
                 await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
 
-                if (lsOrganisation != null)
+                return lsOrganisation switch
                 {
-                    return Ok(lsOrganisation);
-                }
-                else
-                {
-                    return BadRequest();
-                }
+                    not null => Ok(lsOrganisation),
+                    _ => BadRequest()
+                };
             }
             catch (Exception ex)
             {
@@ -93,7 +87,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("AddEntityGroup")]
-        public async Task<IActionResult> AddEntityGroup(string EntityCode, string EntityDescription, bool Ischild, long? parentEntityID) //string? parentEntityGuid)
+        public async Task<IActionResult> AddEntityGroup(string EntityCode, string EntityName, string EntityDescription, bool Ischild, long? parentEntityID,string? strLogo) //string? parentEntityGuid)
         {
             try
             {
@@ -105,11 +99,13 @@ namespace WebApi.Controllers
                 {
                     Mode = "Add",
                     EntityGroupCode = EntityCode,
+                    EntityGroupName = EntityName,
                     EntityGroupDesc = EntityDescription,
                     IsChild = Ischild,
                     //ParentEntityGroupGuid = parentEntityGuid,
                     ParentID = parentEntityID,
-                    CreatedBy = userGuid
+                    CreatedBy = userGuid,
+                    Logo = strLogo
                 };
 
                 // Call repository method
@@ -121,11 +117,19 @@ namespace WebApi.Controllers
                 // Check if the result is valid
                 if (lstEntity != null && lstEntity.Any())
                 {
-                    return Ok(lstEntity);
+                    switch (Convert.ToString(lstEntity.First()))
+                    {
+                        case "1":
+                            return Ok(Messages.MSG_SAVE_SUCCESS);
+                        case "2":
+                            return Ok(Messages.MSG_REC_EXISTS_CODE);
+                        default:
+                            return BadRequest(Messages.MSG_ADD_FAIL);
+                    }
                 }
                 else
                 {
-                    return BadRequest("Failed to add Entity Group.");
+                    return BadRequest(Messages.MSG_ADD_FAIL);
                 }
             }
             catch (Exception ex)
@@ -136,7 +140,7 @@ namespace WebApi.Controllers
             }
         }
         [HttpGet("EditEntityGroup")]
-        public async Task<IActionResult> EditEntityGroup(long ID,string EntityCode, string EntityDescription, bool Ischild, long? parentEntityID)  //string? parentEntityGuid)
+        public async Task<IActionResult> EditEntityGroup(long ID,string EntityCode, string EntityName, string EntityDescription, bool Ischild, long? parentEntityID,string? strLogo)  //string? parentEntityGuid)
         {
             try
             {
@@ -149,11 +153,13 @@ namespace WebApi.Controllers
                     Mode = "Edit",
                     EntityGroupCode = EntityCode,
                     EntityGroupDesc = EntityDescription,
+                    EntityGroupName = EntityName,
                     IsChild = Ischild,
                     ParentID = parentEntityID,
                    // ParentEntityGroupGuid = parentEntityGuid,
                     CreatedBy = userGuid,
-                    ID = ID
+                    ID = ID,
+                    Logo = strLogo
                 };
 
                 // Call repository method
@@ -163,11 +169,19 @@ namespace WebApi.Controllers
                 // Check if the result is valid
                 if (lstEntity != null && lstEntity.Any())
                 {
-                    return Ok(lstEntity);
+                    switch (Convert.ToString(lstEntity.First()))
+                    {
+                        case "1":
+                            return Ok(Messages.MSG_UPDATED_SUCCESS);
+                        case "2":
+                            return Ok(Messages.MSG_REC_EXISTS_CODE);
+                        default:
+                            return BadRequest(Messages.MSG_ADD_FAIL);
+                    }
                 }
                 else
                 {
-                    return BadRequest("Failed to add Entity Group.");
+                    return BadRequest(Messages.MSG_ADD_FAIL);
                 }
             }
             catch (Exception ex)
@@ -177,35 +191,6 @@ namespace WebApi.Controllers
                 return StatusCode(500, "An unexpected error occurred.");
             }
         }
-
-        //[HttpGet("DeleteEntityGroup")]
-        //public async Task<IActionResult> DeleteEntityGroup(List<EntityGroupDel> lstEntityGroupDel)
-        //{
-        //    try
-        //    {
-        //        string strUserGuid = HttpContext?.Session?.GetString(Common.SessionVariables.Guid) ?? string.Empty;
-        //        string strMode = "DELETE";
-
-        //        // Ensure levelInfoDetails is a collection
-        //        List<DeleteResultModel> lstDelete = await _repository.entityGroupRepo.DeleteEntityGroup(lstEntityGroupDel, strMode, strUserGuid);
-        //        await _auditLogService.LogAction(strUserGuid, "DeleteEntityGroup", string.Empty);
-
-        //        if (lstDelete != null && lstDelete.Count > 0)
-        //        {
-        //            return Ok(lstDelete);
-        //        }
-        //        else
-        //        {
-        //            return BadRequest("No records found to delete.");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error in DeleteOrganisationLevel: {ex.Message} {ex.StackTrace}");
-        //        return StatusCode(500, "An error occurred while deleting the organisation level.");
-        //    }
-        //}
-
 
         [HttpPost("DeleteEntityGroup")]
         public async Task<IActionResult> DeleteEntityGroup([FromBody] List<EntityGroupDel> lstEntityGroupDel)
@@ -218,14 +203,11 @@ namespace WebApi.Controllers
                 List<DeleteResultModel> lstDelete = await _repository.entityGroupRepo.DeleteEntityGroup(lstEntityGroupDel, strMode, strUserGuid);
                 await _auditLogService.LogAction(strUserGuid, "DeleteEntityGroup", string.Empty);
 
-                if (lstDelete != null && lstDelete.Count > 0)
+                return lstDelete switch
                 {
-                    return Ok(lstDelete);
-                }
-                else
-                {
-                    return BadRequest("No records found to delete.");
-                }
+                    { Count: > 0 } => Ok(lstDelete),
+                    _ => BadRequest("No records found to delete.")
+                };
             }
             catch (Exception ex)
             {
