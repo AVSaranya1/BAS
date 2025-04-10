@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
@@ -156,41 +157,53 @@ namespace DataAccessLayer.Model
 
             return UserAccountOrgTable;
         }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public string? Guid { get; set; }
         public string? PlatformUser { get; set; }
         public DateTime? EffectiveDate { get; set; }
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly =true)]
+        [BindNever]
         public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public Int64 RoleID { get; set; }
         public long UserPolicy { get; set; }
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        
-        [JsonIgnore]
-        public long CreatedBy { get; set; }
-        public long ProfileID { get; set; }
-        public DateOnly? UserExpiryDate { get; set; }
-        public IFormFile? ProfileImg {  get; set; }
 
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
+        public long CreatedBy { get; set; }
+        public long ProfileID { get; set; } = 0;
+        public DateOnly? UserExpiryDate { get; set; }
+        public UserAccountModel()
+        {
+            ProfileID = 0;
+            UserExpiryDate = DateOnly.FromDateTime(DateTime.Now);
+        }
+        
     }
-   public class GetUserAccountModel
+}
+    
+    public class GetUserAccountModel
     {
         public long? UserId { get; set; }
         public string? UserName { get; set; }
@@ -233,7 +246,7 @@ namespace DataAccessLayer.Model
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
         public DataTable UserAccountRoleClientTable = new DataTable();
-        public IFormFile? ProfileImg { get; set; }
+        
         public DataTable ConvertToDataTable(long CreatedBy, string GUid)
         {
 
@@ -377,7 +390,8 @@ namespace DataAccessLayer.Model
 
             return UserAccountOrgTable;
         }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
@@ -388,23 +402,27 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public Int64 RoleID { get; set; }
         public long UserPolicy { get; set; }
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
-        [JsonIgnore]
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        
-        [JsonIgnore]
+
+        [SwaggerSchema(ReadOnly = true)]
+        [BindNever]
         public long? CreatedBy { get; set; }
         public long ProfileID { get; set; }
         public DateOnly? UserExpiryDate { get; set; }
@@ -431,18 +449,8 @@ namespace DataAccessLayer.Model
     public class UserAccountUpdateRequest
     {
         public UpdateUserAccountModel? UserAccount { get; set; }
-        public List<RoleNameInUserAccount?> RoleNameList { get; set; } = new List<RoleNameInUserAccount?>();
         
-        public List<UserAccountOrgDatatable?> OrgDataTable { get; set; } = new List<UserAccountOrgDatatable?>();
     }
-    public class UserAccountInsertRequest
-    {
-        public UserAccountModel? UserAccount { get; set; }
-        public List<RoleNameInUserAccount?> RoleNameList { get; set; } = new List<RoleNameInUserAccount?>();
-        
-        public List<UserAccountOrgDatatable?> OrgDataTable { get; set; } = new List<UserAccountOrgDatatable?>();
-    }
-
     public class GetRoleName
     {
         public long Value { get; set; }
@@ -669,4 +677,4 @@ namespace DataAccessLayer.Model
         public string? UserName { get; set; }
     }
     
-}
+
