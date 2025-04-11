@@ -15,6 +15,8 @@ namespace DataAccessLayer.Model
         public long? ParentID { get; set; }
         public Guid? Guid { get; set; }
         public string? EntityGroupCode { get; set; }
+        public string? EntityGroupName { get; set; }
+        
         public string? EntityGroupDesc { get; set; }
         public string? Logo { get; set; }
         public bool? IsChild { get; set; }
