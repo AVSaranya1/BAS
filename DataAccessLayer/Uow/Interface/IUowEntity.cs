@@ -4,6 +4,6 @@ namespace DataAccessLayer.Uow.Interface;
 
 public interface IUowEntity: IDisposable
 {
-    IEntityDAL EntityDALRepo { get; }
+    IBusinessEntityDAL EntityDALRepo { get; }
     void Commit();
 }

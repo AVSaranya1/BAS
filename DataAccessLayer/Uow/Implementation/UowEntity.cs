@@ -10,7 +10,7 @@ namespace DataAccessLayer.Uow.Implementation;
 
 public class UowEntity : IUowEntity
 {
-    IEntityDAL? objEntityDAL = null;
+    IBusinessEntityDAL? objEntityDAL = null;
     IDbTransaction transaction;
     IDbConnection? connection = null;
     IHttpContextAccessor _httpContextAccessor;
@@ -66,11 +66,11 @@ public class UowEntity : IUowEntity
     {
     }
 
-    public IEntityDAL EntityDALRepo
+    public IBusinessEntityDAL EntityDALRepo
     {
         get
         {
-            return objEntityDAL == null ? objEntityDAL = new EntityDAL(transaction) : objEntityDAL;
+            return objEntityDAL == null ? objEntityDAL = new BusinessEntityDAL(transaction) : objEntityDAL;
         }
     }
 

@@ -1,118 +1,65 @@
 ﻿using DataAccessLayer.Uow.Interface;
-using System.Text;
 using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
 using Microsoft.Data.SqlClient;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 
 namespace DataAccessLayer.Uow.Implementation;
-public class UowDropdown : IUowDropdown
+public class UowDropdown : IUowDropdown, IDisposable
 {
     IDropdownDAL? objMasterDAL = null;
-    IDbTransaction transaction;
-    IDbConnection? connection = null;
-    IHttpContextAccessor _httpContextAccessor;
+    private readonly IDbTransaction _transaction;
+    private readonly string connectionString;
+    private readonly IDbConnection _connection;
+    private bool _disposedValue = false;
 
-    public UowDropdown(string connectionstring, IHttpContextAccessor httpContextAccessor)
+    public UowDropdown(string connectionString)
     {
-        _httpContextAccessor = httpContextAccessor;
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentNullException(nameof(connectionString), "Connection string cannot be null or empty.");
 
-        if (_httpContextAccessor.HttpContext?.Session.GetString("DBName") != null)
-        {
-            string dbName = _httpContextAccessor.HttpContext?.Session.GetString("DBName") ?? "";
-            string finalConnectionString = BuildConnectionString(connectionstring, dbName);
-            connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
-            connection.Open();
-            transaction = connection.BeginTransaction();
-        }
-        else if (_httpContextAccessor.HttpContext?.Session != null &&
-                 _httpContextAccessor.HttpContext?.Session.GetString("InstanceName") != null &&
-                 _httpContextAccessor.HttpContext?.Session.GetString("InstanceChange") == "Y" &&
-                 _httpContextAccessor.HttpContext?.Session.GetString("DataBaseUserName") != null &&
-                 _httpContextAccessor.HttpContext?.Session.GetString("DataBasePassword") != null)
-        {
-            string serverName = _httpContextAccessor.HttpContext?.Session?.GetString("InstanceName") ?? "";
-            string userId = _httpContextAccessor.HttpContext?.Session?.GetString("DataBaseUserName") ?? "";
-            string password = _httpContextAccessor.HttpContext?.Session?.GetString("DataBasePassword") ?? "";
-            string dbName = _httpContextAccessor.HttpContext?.Session?.GetString("DBName") ?? "";
-            string maxPoolSize = _httpContextAccessor.HttpContext?.Session?.GetString("MaxPoolSize") ?? "100";
+        this.connectionString = connectionString;
 
-            string finalConnectionString = BuildConnectionString(connectionstring, serverName, userId, password, dbName, maxPoolSize);
-            connection = new SqlConnection(finalConnectionString);
-            connection.Open();
-            transaction = connection.BeginTransaction();
-        }
-        else
-        {
-            connection = new SqlConnection(connectionstring);
-            connection.Open();
-            transaction = connection.BeginTransaction();
-        }
-    }
-
-    // Overloaded constructor that retrieves the connection string from HttpContext (set by your middleware)
-    public UowDropdown(IHttpContextAccessor httpContextAccessor) : this(
-       // Try to get the connection string from HttpContext.Items.
-       httpContextAccessor.HttpContext?.Items["connection"] as string
-       // If not found, fallback to the configuration.
-       ?? (httpContextAccessor.HttpContext?.RequestServices
-             .GetService(typeof(IConfiguration)) as IConfiguration)
-             ?.GetConnectionString("connection")
-       // If still not found, throw an exception.
-       ?? throw new InvalidOperationException("No connection string found in HttpContext or configuration."),
-       httpContextAccessor)
-    {
+        // Initialize connection and transaction
+        _connection = new SqlConnection(connectionString);
+        _connection.Open();
+        _transaction = _connection.BeginTransaction();
     }
 
     public IDropdownDAL MasterDALRepo
     {
         get
         {
-            return objMasterDAL == null ? objMasterDAL = new DropdownDAL(transaction) : objMasterDAL;
+            return objMasterDAL == null ? objMasterDAL = new DropdownDAL(_transaction, connectionString) : objMasterDAL;
         }
     }
-    private string BuildConnectionString(string baseConnectionString, string dbName)
-    {
-        var builder = new SqlConnectionStringBuilder(baseConnectionString)
-        {
-            InitialCatalog = dbName
-        };
-        return builder.ToString();
-    }
 
-    private string BuildConnectionString(string baseConnectionString, string serverName, string userID, string password, string dbName, string maxPoolSize)
-    {
-        var builder = new SqlConnectionStringBuilder(baseConnectionString)
-        {
-            DataSource = serverName,
-            UserID = userID,
-            Password = password,
-            InitialCatalog = dbName,
-            //MaxPoolSize = int.Parse(maxPoolSize)
-        };
-        return builder.ToString();
-    }
 
+    /// <summary>
+    /// Commits the transaction.
+    /// </summary>
     public void Commit()
     {
         try
         {
-            transaction.Commit();
+            _transaction?.Commit();
         }
         catch
         {
-            transaction.Rollback();
+            // Rollback transaction if commit fails
+            _transaction?.Rollback();
+            throw; // Rethrow exception to ensure the caller is aware of the issue
         }
         finally
         {
-            transaction.Dispose();
-
-            objMasterDAL = null;
+            // Clean up resources after commit or rollback
+            DisposeTransaction();
         }
     }
-    private bool disposedValue = false;
+
+    /// <summary>
+    /// Disposes the Unit of Work resources.
+    /// </summary>
     public void Dispose()
     {
         Dispose(true);
@@ -121,24 +68,38 @@ public class UowDropdown : IUowDropdown
 
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposedValue)
+        if (!_disposedValue)
         {
             if (disposing)
             {
-                if (transaction != null)
-                {
-                    transaction.Dispose();
-                    //  transaction = null;
-                }
-                if (connection != null)
-                {
-                    connection.Dispose();
-                    connection = null;
-                }
+                // Dispose managed resources
+                DisposeTransaction();
+                DisposeConnection();
             }
-            disposedValue = true;
+
+            _disposedValue = true;
         }
     }
+
+    private void DisposeTransaction()
+    {
+        if (_transaction != null)
+        {
+            _transaction.Dispose();
+        }
+    }
+
+    private void DisposeConnection()
+    {
+        if (_connection != null && _connection.State == ConnectionState.Open)
+        {
+            _connection.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Destructor to ensure resources are released.
+    /// </summary>
     ~UowDropdown()
     {
         Dispose(false);
