@@ -96,6 +96,7 @@ namespace DataAccessLayer.Model
             public const string CHECK_ModuleType = "CHECK_ModuleType";
             public const string CHECKUSEREXISTS = "CHECKUSEREXISTS";
             public const string VALIDATE_TOKEN= "VALIDATE_TOKEN";
+            public const string GET_ORG_INDUSTRY_DROPDOWN= "GET_ORG_INDUSTRY_DROPDOWN";
         }
         public class FileExtensions
         {
