@@ -1,84 +1,178 @@
 ﻿using Dapper;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Model;
-using Microsoft.SqlServer.Management.Smo;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace DataAccessLayer.Implementation;
-public class DropdownDAL : RepositoryBase,IDropdownDAL
+public class DropdownDAL : RepositoryBase, IDropdownDAL
 {
-    public DropdownDAL(IDbTransaction _transaction) : base(_transaction)
+    private readonly string _connectionString;
+
+    public DropdownDAL(IDbTransaction _transaction, string connectionString) : base(_transaction)
     {
-            
+        _connectionString = connectionString;
     }
+
     public async Task<IEnumerable<DropDownModel>> getLevel(long userID)
     {
-        DynamicParameters parameters = new DynamicParameters();        
-        parameters.Add("@UserID", userID);        
-        parameters.Add("@Mode", "LEVEL");
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@UserID", userID);
+                parameters.Add("@Mode", "LEVEL");
 
-        return await Connection.QueryAsync<DropDownModel>("sp_ListData",
-            parameters,
-            transaction: Transaction,
-            commandType: CommandType.StoredProcedure);
+                return await Connection.QueryAsync<DropDownModel>("sp_ListData",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"SQL Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+        return Enumerable.Empty<DropDownModel>();
     }
 
-    public async Task<IEnumerable<DropDownModel>> getParentEntity(long userID,string RefID1,string RefID2)
+    public async Task<IEnumerable<DropDownModel>> getParentEntity(long userID, string RefID1, string RefID2)
     {
-        DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@RefID1", RefID1);
-        parameters.Add("@RefID2", RefID2);
-        parameters.Add("@UserID", userID);       
-        parameters.Add("@Mode", "PARENT_ENTITY");
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@RefID1", RefID1);
+                parameters.Add("@RefID2", RefID2);
+                parameters.Add("@UserID", userID);
+                parameters.Add("@Mode", "PARENT_ENTITY");
 
-        return await Connection.QueryAsync<DropDownModel>("sp_ListData",
-            parameters,
-            transaction: Transaction,
-            commandType: CommandType.StoredProcedure);
+                return await Connection.QueryAsync<DropDownModel>("sp_ListData",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"SQL Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        return Enumerable.Empty<DropDownModel>();
     }
 
     public async Task<IEnumerable<DropDownModel>> getCountry()
     {
-        DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@Mode", "COUNTRY");
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@Mode", "COUNTRY");
 
-        return await Connection.QueryAsync<DropDownModel>("sp_ListData",
-            parameters,
-            transaction: Transaction,
-            commandType: CommandType.StoredProcedure);
+                return await Connection.QueryAsync<DropDownModel>("sp_ListData",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"SQL Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        return Enumerable.Empty<DropDownModel>();
     }
 
     public async Task<IEnumerable<DropDownModel>> getCurrency()
     {
-        DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@Mode", "CURRENCY");
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@Mode", "CURRENCY");
 
-        return await Connection.QueryAsync<DropDownModel>("sp_ListData",
-            parameters,
-            transaction: Transaction,
-            commandType: CommandType.StoredProcedure);
+                return await Connection.QueryAsync<DropDownModel>("sp_ListData",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"SQL Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        return Enumerable.Empty<DropDownModel>();
+    }
+
+    public async Task<IEnumerable<DropDownModel>> getIndustry()
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@Mode", "GET_INDUSTRY_DROPDOWN");
+
+                return await Connection.QueryAsync<DropDownModel>("sp_ListData",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"SQL Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        return Enumerable.Empty<DropDownModel>();
     }
 
     public async Task<IEnumerable<TimezoneModel>> getTimeZone(long? RefID1)
     {
-        DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@RefID1", RefID1);
-        parameters.Add("@Mode", "TIMEZONE");
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@RefID1", RefID1);
+                parameters.Add("@Mode", "TIMEZONE");
 
-        return await Connection.QueryAsync<TimezoneModel>("sp_ListData",
-            parameters,
-            transaction: Transaction,
-            commandType: CommandType.StoredProcedure);
-    }
-
-    public async Task<IEnumerable<DropDownModel>> getEntityGroup()
-    {
-        DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@Mode", "Entity_Group");
-
-        return await Connection.QueryAsync<DropDownModel>("sp_ListData",
-            parameters,
-            transaction: Transaction,
-            commandType: CommandType.StoredProcedure);
+                return await Connection.QueryAsync<TimezoneModel>("sp_ListData",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"SQL Error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        return Enumerable.Empty<TimezoneModel>();
     }
 }

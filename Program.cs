@@ -61,7 +61,7 @@ builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<EncryptedDecrypt>();
 // Register MailServer with DI
 builder.Services.AddScoped<MailServer>(sp => new MailServer(connectionString));
-
+builder.Services.AddScoped<IUowDropdown>(sp => new UowDropdown(connectionString));
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();

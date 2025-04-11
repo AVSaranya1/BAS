@@ -6,6 +6,7 @@ public interface IDropdownDAL
     Task<IEnumerable<DropDownModel>> getParentEntity(long UserID,string RefID1,string RefID2);
     Task<IEnumerable<DropDownModel>> getCountry();
     Task<IEnumerable<DropDownModel>> getCurrency();
+    Task<IEnumerable<DropDownModel>> getIndustry();
     Task<IEnumerable<TimezoneModel>> getTimeZone(long? RefID1);
-    Task<IEnumerable<DropDownModel>> getEntityGroup();
+
 }
