@@ -56,6 +56,7 @@ builder.Services.AddScoped<IUowOrganisation>(sp => new UowOrganisation(connectio
 builder.Services.AddScoped<IUowEmailTemplate>(sp => new UowEmailTemplate(connectionString));
 builder.Services.AddScoped<EmailServices>();
 builder.Services.AddScoped<SessionService>();
+builder.Services.AddScoped<UploadFileServices>();
 
 //Added Encryption and Decryption Services with DI
 builder.Services.AddScoped<EncryptedDecrypt>();
