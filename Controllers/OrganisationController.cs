@@ -22,20 +22,23 @@ namespace WebApi.Controllers
         private readonly IUowOrganisation _repository;
         private readonly ILogger<OrganisationController> _logger;
         private readonly IAuditLogService _auditLogService;
+        private UploadFileServices _uploadfile;
         
         string token = string.Empty;
         string userGuid = string.Empty;
         private readonly IWebHostEnvironment _environment;
         private readonly string _physicalPath;
         private readonly string _virtualPath;
-        public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService, IWebHostEnvironment environment) : base(configuration)
+        
+        public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration, IUowOrganisation repository, IAuditLogService auditLogService, IWebHostEnvironment environment,UploadFileServices uploadFileServices) : base(configuration)
         {
             _logger = logger;
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _auditLogService = auditLogService;
             _environment = environment;
-            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], "Org")??"/img";
-            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"],"Org")??"/img";
+            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], Common.FileFolder.Org) ?? Common.FileFolder.img;
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], Common.FileFolder.Org) ?? Common.FileFolder.img;
+            _uploadfile = uploadFileServices;
         }
 
         [HttpPost("InsertOrganisation")]
@@ -43,34 +46,11 @@ namespace WebApi.Controllers
         {
             try
             {
-                //var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                var allowedExtensions = Common.FileExtensions.FileNameExtension;
+               
                 string? fileName = orgModel.Logo?.FileName.Trim() ?? string.Empty;
-                if (!string.IsNullOrEmpty(fileName))
-                {
-                    // Get file extension
-                    var extension = Path.GetExtension(orgModel.Logo.FileName).Trim().ToLowerInvariant();
-                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                    {
-                        return BadRequest("Invalid file type.");
-                    }
-                    else
-                    {
-                        if (!Directory.Exists(_physicalPath))
-                            Directory.CreateDirectory(_physicalPath);
-                        var filePath = Path.Combine(_physicalPath, orgModel.Logo.FileName.Trim());
-                        if (System.IO.File.Exists(filePath))
-                        {
-                            System.IO.File.Delete(filePath);
-                        }
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await orgModel.Logo.CopyToAsync(stream);
-                        }
-
-                    }
-                }
-                var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
+               
+                string? ImageUpdated = await _uploadfile.InsertandUpdateFileName(fileName, orgModel.Logo, _physicalPath);
+                var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel, ImageUpdated);
                 await _auditLogService.LogAction(userGuid, "InsertOrganisation", token);
 
                 var msg = "Organisation Inserted Successfully";
@@ -107,16 +87,7 @@ namespace WebApi.Controllers
                 foreach(var org in lsOrganisation)
                 {
                     string filePath = string.Empty;
-                    if (!string.IsNullOrEmpty(org.Logo))
-                    {
-                        filePath = Path.Combine(_virtualPath, org.Logo);
-                    }
-                    else
-                    {
-                        filePath = Path.Combine(Path.GetDirectoryName(_virtualPath), Common.FileName.noPhoto);
-
-                    }
-                    
+                    filePath = _uploadfile.GetFile(org.Logo, _virtualPath);
                     org.LogoUrl= filePath;
                 }
 
@@ -221,17 +192,8 @@ namespace WebApi.Controllers
                 await _auditLogService.LogAction(userGuid, "GetOrganisationById", token);
                 if (objOrganisationModel != null)
                 {
-                    string filePath = string.Empty;
-                    if (objOrganisationModel.Logo != null && !string.IsNullOrEmpty(objOrganisationModel.Logo))
-                    { 
-                        filePath = Path.Combine(_virtualPath, objOrganisationModel.Logo);
-                    }
-                    else
-                    {
-                        //Refers Previous Path
-                        filePath = Path.Combine(Path.GetDirectoryName(_virtualPath),Common.FileName.noPhoto);
-
-                    }
+                    string? filePath = string.Empty;
+                    filePath = _uploadfile.GetFile(objOrganisationModel.Logo, _virtualPath);
                     objOrganisationModel.LogoUrl= filePath;
                     return Ok(objOrganisationModel);
                 }
@@ -262,32 +224,8 @@ namespace WebApi.Controllers
                 // var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
                 var allowedExtensions = Common.FileExtensions.FileNameExtension;
                 string? fileName= Org.Logo?.FileName??string.Empty;
-                if (!string.IsNullOrEmpty(fileName))
-                {
-                    // Get file extension
-                    var extension = Path.GetExtension(Org.Logo.FileName).ToLowerInvariant();
-                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                    {
-                        return BadRequest("Invalid file type.");
-                    }
-                    else
-                    {
-                        if (!Directory.Exists(_physicalPath))
-                            Directory.CreateDirectory(_physicalPath);
-
-                        var filePath = Path.Combine(_physicalPath, Org.Logo.FileName);
-                        if (System.IO.File.Exists(filePath))
-                        {
-                            System.IO.File.Delete(filePath);
-                        }
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await Org.Logo.CopyToAsync(stream);
-                        }
-                    }
-                }
-                var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
+                string? ImageUpdated = await _uploadfile.InsertandUpdateFileName(fileName, Org.Logo, _physicalPath);
+                var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org, ImageUpdated);
                 await _auditLogService.LogAction("","UpdateOrganisation", token);
                 var msg = "Organization updated successfully.";
                 if (result == "1")
