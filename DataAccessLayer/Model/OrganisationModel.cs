@@ -55,7 +55,7 @@ namespace DataAccessLayer.Model
         public string? CcEmailAddress { get; set; }
         public string? Logo { get; set; }
         [NotMapped]
-        public string LogoUrl { get; set; }  // e.g., full URL built at runtime
+        public string? LogoUrl { get; set; }  // e.g., full URL built at runtime
         public string? DBName { get; set; }
         public long? DataLocationID { get; set; }
         public string? SepPolling { get; set; }
