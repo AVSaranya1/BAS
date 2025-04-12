@@ -31,7 +31,7 @@ namespace DataAccessLayer.Implementation
         {
             _connectionString = connectionString;
         }
-        public async Task<string> InsertOrganisation(OrganisationModel model)
+        public async Task<string> InsertOrganisation(OrganisationModel model, string? ImageUpdated)
         {
             try
             {
@@ -50,7 +50,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@PriEmailAddress", model.PriEmailAddress);
                     parameters.Add("@SecEmailAddress", model.SecEmailAddress);
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    parameters.Add("@CompanyLogo", model.Logo?.FileName.Trim());
+                    parameters.Add("@CompanyLogo", ImageUpdated);
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Active", model.Active);
@@ -178,7 +178,7 @@ namespace DataAccessLayer.Implementation
             }
         }
 
-        public async Task<string> UpdateOrganisation(OrganisationModel model)
+        public async Task<string> UpdateOrganisation(OrganisationModel model, string? ImageUpdated)
         {
             
             try
@@ -198,7 +198,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@PriEmailAddress", model.PriEmailAddress);
                     parameters.Add("@SecEmailAddress", model.SecEmailAddress);
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    parameters.Add("@CompanyLogo", model.Logo?.FileName.Trim());
+                    parameters.Add("@CompanyLogo", ImageUpdated);
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@Guid", model.Guid);
