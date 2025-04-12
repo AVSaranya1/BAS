@@ -23,12 +23,14 @@ namespace WebApi.Controllers
         private SessionService _sessionService;
         private readonly IAuditLogService _auditLogService;
         private GUID _guid;
+        private UploadFileServices _uploadfile;
         private readonly IWebHostEnvironment _environment;
         private readonly string _physicalPath;
         private readonly string _virtualPath;
+        private string _FolderName;
 
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor,IConfiguration configuration, SessionService sessionService, GUID guid, IAuditLogService auditLogService, IWebHostEnvironment environment) : base(configuration)
+        public UserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor,IConfiguration configuration, SessionService sessionService, GUID guid, IAuditLogService auditLogService, IWebHostEnvironment environment, UploadFileServices uploadfile) : base(configuration)
         {
             _emailService = emailServices;
             _logger = logger;
@@ -37,8 +39,9 @@ namespace WebApi.Controllers
             _guid = guid;
             _auditLogService = auditLogService;
             _environment = environment;
-            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], "UserImage") ?? "/img";
-            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"],"UserImage") ?? "img";
+            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], _FolderName=Common.FileFolder.UserImage) ?? Common.FileFolder.img;
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], _FolderName=Common.FileFolder.UserImage) ?? Common.FileFolder.img;
+            _uploadfile = uploadfile;
         }
         //List Page for User Creation
         [HttpGet("getAllUserAccount")]
@@ -58,18 +61,10 @@ namespace WebApi.Controllers
                         if (lstUserAccountModel != null && lstUserAccountModel.Count > 0)
                         {
                             string filePath = string.Empty;
+                             
                             foreach (var org in lstUserAccountModel)
                             {
-                                if(!string.IsNullOrEmpty(org?.ProfileImg))
-                                {
-                                     filePath = Path.Combine(_virtualPath, org.ProfileImg);
-                                }
-                                else
-                                {
-                                    filePath = Path.Combine(Path.GetDirectoryName(_virtualPath),Common.FileName.noPhoto);
-
-                                }
-                                
+                                filePath = _uploadfile.GetFile(org.ProfileImg,_virtualPath);
                                 org.ProfileImgUrl = filePath;
                             }
                             return Ok(lstUserAccountModel);
@@ -260,15 +255,7 @@ namespace WebApi.Controllers
                                 if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
                                 {
                                     string filePath = string.Empty;
-                                    if(!string.IsNullOrEmpty(objuseraccountModel.userAccounts?.ProfileImg))
-                                    {
-                                        filePath = Path.Combine(_virtualPath, objuseraccountModel.userAccounts?.ProfileImg);
-                                    }
-                                    else
-                                    {
-                                        filePath = Path.Combine(Path.GetDirectoryName(_virtualPath), Common.FileName.noPhoto);
-                                            
-                                    }
+                                    filePath = _uploadfile.GetFile(objuseraccountModel.userAccounts.ProfileImg,_virtualPath);
                                     objuseraccountModel.userAccounts.ProfileImgUrl=filePath;
                                     response = new UserAccountResponse
                                     {
@@ -315,7 +302,7 @@ namespace WebApi.Controllers
 
                     if (!string.IsNullOrEmpty(responseGUId))
                     {
-                        await _auditLogService.LogAction("", "GetUserAccountByGUId", "");
+                        await _auditLogService.LogAction("", "ViewUserAccountByGUId", "");
                         string? guidresp = await _guid.GetGUIDBasedOnUserGuid(guid);
                         if (guid.Equals(guidresp))
                         {
@@ -330,6 +317,9 @@ namespace WebApi.Controllers
                                 }
                                 if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
                                 {
+                                    string filePath = string.Empty;
+                                    filePath = _uploadfile.GetFile(objuseraccountModel.userAccounts.ProfileImg,_virtualPath);
+                                    objuseraccountModel.userAccounts.ProfileImgUrl = filePath;
                                     response = new UserAccountResponse
                                     {
                                         User = objuseraccountModel.userAccounts,
@@ -517,34 +507,9 @@ namespace WebApi.Controllers
                     DataTable dataTable = objModel.ConvertToDataTable(orgDataList, 0);
                     DataTable dataTableRole = objModel.ConvertToDataTable(roleDataList, userId, 0);
                     DataTable dataTableClientRole = objModel.ConvertToDataTable(userId, 0);
-                    var allowedExtensions = Common.FileExtensions.FileNameExtension;
+                    
                     string? FileName = ProfileImage?.FileName.Trim() ?? string.Empty;
-                    string? ImageUpdated = string.Empty;
-                    if (!string.IsNullOrEmpty(FileName))
-                    {
-                        // Get file extension
-                        var extension = Path.GetExtension(ProfileImage.FileName).Trim().ToLowerInvariant();
-                        if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                        {
-                            return BadRequest("Invalid file type. Allowed Files types"+ Common.FileExtensions.FileNameExtension);
-                        }
-                        else
-                        {
-                            if (!Directory.Exists(_physicalPath))
-                                Directory.CreateDirectory(_physicalPath);
-                            string UniqueName = Path.ChangeExtension(Path.GetRandomFileName(), extension);
-                            var filePath = Path.Combine(_physicalPath, UniqueName);
-                            if (System.IO.File.Exists(filePath))
-                            {
-                                System.IO.File.Delete(filePath);
-                            }
-                            using (var stream = new FileStream(filePath, FileMode.Create))
-                            {
-                                await ProfileImage.CopyToAsync(stream);
-                            }
-                            ImageUpdated=ProfileImage?.FileName.Replace(FileName, UniqueName);
-                        }
-                    }
+                    string ImageUpdated= await _uploadfile.InsertandUpdateFileName(FileName, ProfileImage, _physicalPath);
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel, ImageUpdated);
@@ -651,35 +616,9 @@ namespace WebApi.Controllers
                             DataTable dataTable = userAccount.ConvertToDataTable(orgDataList, userAccount.MasterGuid);
                             DataTable dataTableRole = userAccount.ConvertToDataTable(roleDataList, userId, userAccount.MasterGuid);
                             DataTable dataTableClientRole = userAccount.ConvertToDataTable(userId, userAccount.MasterGuid);
-                            var allowedExtensions = Common.FileExtensions.FileNameExtension;
-                            string? FileName = ProfileImage?.FileName.Trim()??string.Empty;
-                            if(!string.IsNullOrEmpty(FileName))
-                            {
-                                // Get file extension
-                                var extension = Path.GetExtension(ProfileImage.FileName).Trim().ToLowerInvariant();
-                                if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
-                                {
-                                    return BadRequest("Invalid file type." + Common.FileExtensions.FileNameExtension);
-                                }
-                                else
-                                {
-                                    if (!Directory.Exists(_physicalPath))
-                                        Directory.CreateDirectory(_physicalPath);
-                                    string UniqueName=Path.ChangeExtension(Path.GetRandomFileName(), extension);
-
-                                    var filePath = Path.Combine(_physicalPath, UniqueName);
-                                    if (System.IO.File.Exists(filePath))
-                                    {
-                                        System.IO.File.Delete(filePath);
-                                    }
-                                    using (var stream = new FileStream(filePath, FileMode.Create))
-                                    {
-                                        await ProfileImage.CopyToAsync(stream);
-                                    }
-                                    ImageUpdated=ProfileImage?.FileName.Replace(FileName, UniqueName);
-                                }
-                            }
                             
+                            string? FileName = ProfileImage?.FileName.Trim()??string.Empty;
+                            ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, ProfileImage,_physicalPath);
                             using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                             {
                                 var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount, ImageUpdated);
