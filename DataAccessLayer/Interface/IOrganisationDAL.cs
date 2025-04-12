@@ -14,8 +14,8 @@ namespace DataAccessLayer.Interface
         Task<GetOrganisationModel> GetOrganisationById(string Guid);
 
 
-        Task<string> InsertOrganisation(OrganisationModel OrganisationModel);
-        Task<string> UpdateOrganisation(OrganisationModel OrganisationModel);
+        Task<string> InsertOrganisation(OrganisationModel OrganisationModel,string? ImageUpdated);
+        Task<string> UpdateOrganisation(OrganisationModel OrganisationModel, string? ImageUpdated);
 
         Task<List<OrganisationDeleteRecord>> DeleteOrganisation(List<DeleteRecord> dltOrg);
         Task<List<DataLocationDropdown>> DataLocationInDropdown();
