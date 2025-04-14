@@ -322,9 +322,9 @@ namespace DataAccessLayer.Implementation
 
         }
 
-        public async Task<List<DropDownModel>> IndustryDropdown()
+        public async Task<List<MasterDropDownModel>> IndustryDropdown()
         {
-            List<DropDownModel> lstResult = new List<DropDownModel>();
+            List<MasterDropDownModel> lstResult = new List<MasterDropDownModel>();
             try
             {
 
@@ -346,7 +346,7 @@ namespace DataAccessLayer.Implementation
 
                             //transaction.Commit();
 
-                            return multi.Read<DropDownModel>().ToList();
+                            return multi.Read<MasterDropDownModel>().ToList();
                         }
                         catch
                         {
