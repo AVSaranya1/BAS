@@ -133,7 +133,7 @@ namespace DataAccessLayer.Model
         public string? LanguageName { get; set; }
         public string? UserGroupName { get; set; }
         public string? RoleName { get; set; }
-
+        public string? ProfileImgUrl {  get; set; }
     }
     public class UpdateClientUserAccountModel
     {
@@ -364,7 +364,8 @@ namespace DataAccessLayer.Model
         public string? TimeZone { get; set; }
         public string? LanguageName { get; set; }
         public long? LanguageID { get; set; }
-        public string? UserImage { get; set; }
+        public string? ProfileImg { get; set; }
+        public string? ProfileImgUrl { get; set; }
     }
     public class ClientUserAccountResponse
     {
