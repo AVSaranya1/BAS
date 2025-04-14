@@ -5,4 +5,10 @@ public class DropDownModel
     public string value { get; set; }
     public string text { get; set; } = string.Empty;   
 }
+public class MasterDropDownModel
+{
+    public long? Id { get; set; }
+    public string value { get; set; }
+    public string text { get; set; } = string.Empty;
+}
     
