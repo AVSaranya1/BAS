@@ -603,7 +603,7 @@ namespace DataAccessLayer.Implementation
             //return (UserAccount, RoleDetails, UserAccountModules);
             return (UserAccount, RoleDetails);
         }
-        public async Task<(GetClientUserAccount? userAccounts, List<ClientGetUserAccountRole>? UserRoles)> GetUserAccountByGUId(string? GUId, long UpdatedBy)
+        public async Task<(GetClientUserAccount? userAccounts, List<ClientGetUserAccountRole>? UserRoles)> ViewUserAccountByGUId(string? GUId, long UpdatedBy)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGuid", GUId);
