@@ -1,16 +1,24 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using static DataAccessLayer.Model.Common;
 
 namespace DataAccessLayer.Model
 {
+
     public static class Common
     {
-
+        
         public class SessionVariables()
         {
             public const string DBName = "DBName";
@@ -97,17 +105,25 @@ namespace DataAccessLayer.Model
             public const string CHECKUSEREXISTS = "CHECKUSEREXISTS";
             public const string VALIDATE_TOKEN= "VALIDATE_TOKEN";
             public const string GET_ORG_INDUSTRY_DROPDOWN= "GET_ORG_INDUSTRY_DROPDOWN";
+            public const string VIEW_CLIENT_DETAIL="VIEW_CLIENT_DETAIL";
         }
         public class FileExtensions
         {
-            public static readonly string[] FileNameExtension={ ".jpg", ".jpeg", ".png" };
-        }
+            public static readonly string[] FileNameExtension = { ".jpg", ".jpeg", ".png" };
+        }   
         public class FileName
         {
             public static readonly string noPhoto = "nophoto.png";
         }
+        public class FileFolder
+        {
+            public static readonly string? UserImage = "UserImage";
+            
+            public static readonly string Org="Org";
+            public static readonly string img="/img";
+        }
     }
-
+    
     public static class TableVariables
     {
         public class Organisation
