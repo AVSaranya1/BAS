@@ -180,7 +180,7 @@ namespace DataAccessLayer.Implementation
             }
         }
         // Insert or Update User, Then Change DB Connection
-        public async Task<(List<ClientUserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(ClientUserAccountModel? model)
+        public async Task<(List<ClientUserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(ClientUserAccountModel? model, string? ImageUpdated)
         {
             // To Check the DBName is in Default DB Name is Master DB
             
@@ -222,7 +222,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", Common.PageMode.ADD_CLIENT_TO_MASTER);
-            parameters.Add("@ProfileImg", model?.ProfileImg);
+            parameters.Add("@ProfileImg",ImageUpdated);
 
             try
             {
@@ -283,7 +283,7 @@ namespace DataAccessLayer.Implementation
                                      && (OrgDetails?.FirstOrDefault().ConPassword != null && OrgDetails?.FirstOrDefault().ConPassword != string.Empty))
                                 {
                                     UpdateConnectionString(OrgDetails?.FirstOrDefault().DBName, OrgDetails?.FirstOrDefault().InstanceName, OrgDetails?.FirstOrDefault().ConUserName, OrgDetails?.FirstOrDefault().ConPassword);
-                                    var ClientResult = await InsertUpdateUserAccountClient(model);
+                                    var ClientResult = await InsertUpdateUserAccountClient(model, ImageUpdated);
                                 }
                             }
                         _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
@@ -303,7 +303,7 @@ namespace DataAccessLayer.Implementation
         }
 
         // To Insert into Client Database
-        public async Task<(List<ClientUserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, long? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(ClientUserAccountModel? model)
+        public async Task<(List<ClientUserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, long? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(ClientUserAccountModel? model, string? ImageUpdated)
         {
             DynamicParameters clientParameters = new DynamicParameters();
             clientParameters.Add("@UserId", model?.UserId);
@@ -333,6 +333,8 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             clientParameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             clientParameters.Add("@Mode", Common.PageMode.ADD);
+            clientParameters.Add("@ProfileImg", ImageUpdated);
+
             using var resultClient = await Connection.QueryMultipleAsync(
                                                                         "sp_ClientUserAccountCreation",
                                                                         clientParameters,
@@ -360,7 +362,7 @@ namespace DataAccessLayer.Implementation
 
         // To Update into Client DB
 
-        public async Task<(List<UpdateClientUserAccountModel?> updateClientuseraccount, long? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UpdateClientUserAccountModel? model)
+        public async Task<(List<UpdateClientUserAccountModel?> updateClientuseraccount, long? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UpdateClientUserAccountModel? model, string? ImageUpdated)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", model?.UserId);
@@ -379,7 +381,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            parameters.Add("@ProfileImg", model?.ProfileImg);
+            parameters.Add("@ProfileImg", ImageUpdated);
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -601,7 +603,23 @@ namespace DataAccessLayer.Implementation
             //return (UserAccount, RoleDetails, UserAccountModules);
             return (UserAccount, RoleDetails);
         }
-        public async Task<(List<UpdateClientUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateClientUserAccountModel? model)
+        public async Task<(GetClientUserAccount? userAccounts, List<ClientGetUserAccountRole>? UserRoles)> GetUserAccountByGUId(string? GUId, long UpdatedBy)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserGuid", GUId);
+            parameters.Add("@UpdatedBy", UpdatedBy);
+            parameters.Add("@Mode", Common.PageMode.VIEW_CLIENT_DETAIL);
+            var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                                                             parameters,
+                                                             transaction: Transaction,
+                                                             commandType: CommandType.StoredProcedure);
+            var UserAccount = (await multi.ReadAsync<GetClientUserAccount>())?.FirstOrDefault();
+            var RoleDetails = (await multi.ReadAsync<ClientGetUserAccountRole>())?.ToList();
+            //var UserAccountModules = (await multi.ReadAsync<ClientGetUserAccountModules>())?.ToList();
+            //return (UserAccount, RoleDetails, UserAccountModules);
+            return (UserAccount, RoleDetails);
+        }
+        public async Task<(List<UpdateClientUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateClientUserAccountModel? model, string? ImageUpdated)
         {
             // To Check the DBName is in Default DB Name is Master DB
             var httpContext = _httpContextAccessor.HttpContext;
@@ -631,7 +649,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-
+            parameters.Add("@ProfileImg", ImageUpdated);
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -700,7 +718,7 @@ namespace DataAccessLayer.Implementation
                              && (OrgDetails?.FirstOrDefault().ConPassword != null && OrgDetails?.FirstOrDefault().ConPassword != string.Empty))
                         {
                             UpdateConnectionString(OrgDetails?.FirstOrDefault().DBName, OrgDetails?.FirstOrDefault().InstanceName, OrgDetails?.FirstOrDefault().ConUserName, OrgDetails?.FirstOrDefault().ConPassword);
-                            var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model);
+                            var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model, ImageUpdated);
                         }
                     }
                     _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
