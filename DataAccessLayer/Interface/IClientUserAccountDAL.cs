@@ -16,7 +16,7 @@ namespace DataAccessLayer.Interface
         Task<List<ClientUserLanguageName?>> getAllUserLanguageInDropdown();
         Task<List<ClientUserTimeZoneName?>> getAllUserTimeZoneInDropdown();
         Task<(List<ClientUserAccountModel?> InsertedUsers, long? RetVal, string? Msg)> InsertCheckUserAccount(string UserName);
-        Task<(List<ClientUserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(ClientUserAccountModel? UM);
+        Task<(List<ClientUserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(ClientUserAccountModel? UM, string? ImageUpdated);
 
        
         Task<(List<ResetPassword?> PasswordReset, int? RetVal, string? Msg)> ResetPasswordInUserAccount(ResetPassword PasswordReset);
@@ -25,10 +25,11 @@ namespace DataAccessLayer.Interface
 
         //Task<(GetClientUserAccount? userAccounts, List<ClientGetUserAccountRole>? UserRoles, List<ClientGetUserAccountModules>? Modules)> GetUserAccountByGUId(string? GUId, long UpdatedBy);
         Task<(GetClientUserAccount? userAccounts, List<ClientGetUserAccountRole>? UserRoles)> GetUserAccountByGUId(string? GUId, long UpdatedBy);
+        Task<(GetClientUserAccount? userAccounts, List<ClientGetUserAccountRole>? UserRoles)> ViewUserAccountByGUId(string? GUId, long UpdatedBy);
 
         Task<List<GetClientRoleName?>> getAllUserRoleInDropdown(string ClientDBName);
 
-        Task<(List<UpdateClientUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateClientUserAccountModel? userAccount);
+        Task<(List<UpdateClientUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateClientUserAccountModel? userAccount, string? ImageUpdated);
 
         Task<(List<ClientUnlockUser?> unlockuser, int? RetVal, string? Msg)> UnlockUserAsync(ClientUnlockUser? model);
         
