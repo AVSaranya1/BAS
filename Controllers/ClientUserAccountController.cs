@@ -7,6 +7,7 @@ using WebApi.Services;
 using DataAccessLayer.Services;
 using WebApi.Services.Interface;
 using NLog;
+using Newtonsoft.Json;
 
 namespace WebApi.Controllers
 {
@@ -20,7 +21,13 @@ namespace WebApi.Controllers
         private readonly IAuditLogService _auditLogService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private GUID _guid;
-        public ClientUserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, SessionService sessionService, GUID guid, IAuditLogService auditLogService) : base(configuration)
+        private UploadFileServices _uploadfile;
+        private readonly IWebHostEnvironment _environment;
+        private readonly string _physicalPath;
+        private readonly string _virtualPath;
+        private string _FolderName;
+
+        public ClientUserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, SessionService sessionService, GUID guid, IAuditLogService auditLogService,UploadFileServices uploadFileServices,IWebHostEnvironment environment) : base(configuration)
         {
             _emailService = emailServices;
             _logger = logger;
@@ -28,6 +35,10 @@ namespace WebApi.Controllers
             _sessionService = sessionService;
             _guid = guid;
             _auditLogService = auditLogService;
+            _uploadfile = uploadFileServices;
+            _environment = environment;
+            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], _FolderName = Common.FileFolder.UserImage) ?? Common.FileFolder.img;
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], _FolderName = Common.FileFolder.UserImage) ?? Common.FileFolder.img;
         }
         [HttpGet("getAllClientUserAccount")]
         public async Task<IActionResult> getAllClientUserAccount(string? LevelDetailGuid= "067427BF-2613-4C17-89DB-B1D00704AD15")
@@ -61,9 +72,16 @@ namespace WebApi.Controllers
                     if (!string.IsNullOrEmpty(response))
                     {
                         await _auditLogService.LogAction("", "getAllClientUserAccount", "");
+                        
                         var lstUserAccountModel = await _repo.UserAccountDALRepo.GetAllUserAccount(userId, LevelDetailGuid);
                         if (lstUserAccountModel != null && lstUserAccountModel.Count > 0)
                         {
+                            string filePath = string.Empty;
+                            foreach (var org in lstUserAccountModel)
+                            {
+                                filePath = _uploadfile.GetFile(org.ProfileImg, _virtualPath);
+                                org.ProfileImgUrl = filePath;
+                            }
                             return Ok(lstUserAccountModel);
                         }
                         else
@@ -249,6 +267,76 @@ namespace WebApi.Controllers
                         if (guid.Equals(guidresp))
                         {
                             var objuseraccountModel = await _repo.UserAccountDALRepo.GetUserAccountByGUId(guid, userId);
+                            string filePath = string.Empty;
+                            filePath = _uploadfile.GetFile(objuseraccountModel.userAccounts.ProfileImg, _virtualPath);
+                            objuseraccountModel.userAccounts.ProfileImgUrl = filePath;
+                            var response = new ClientUserAccountResponse();
+                            if (objuseraccountModel.userAccounts != null || objuseraccountModel.UserRoles != null)
+                            {
+                                if (objuseraccountModel.userAccounts?.UserID is not null and 0)
+                                {
+                                    // Return 204 No Content
+                                    return NoContent();
+                                }
+                                if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
+                                {
+                                    response = new ClientUserAccountResponse
+                                    {
+                                        User = objuseraccountModel.userAccounts,
+                                        Roles = objuseraccountModel.UserRoles,
+                                        //Modules = objuseraccountModel.Modules
+                                    };
+
+                                }
+                                else
+                                {
+                                    return BadRequest(Common.Messages.NoRecordsFound);
+
+                                }
+                                return Ok(response);
+                            }
+                        }
+                        else
+                        {
+                            return BadRequest("Please Check GUID");
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(Common.Messages.Login);
+                    }
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
+        [HttpGet("ViewClientUserAccountByGUId/{guid}")]
+
+        public async Task<IActionResult> ViewClientUserAccountByGUId(string guid)
+        {
+            try
+            {
+                using (IUowClientUser _repo = new UowClientUserAccount(_httpContextAccessor))
+                {
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                    string responseGUId = _sessionService.GetSession(Common.SessionVariables.Guid);
+
+                    if (!string.IsNullOrEmpty(responseGUId))
+                    {
+                        await _auditLogService.LogAction("", "ViewClientUserAccountByGUId", "");
+                        string? guidresp = await _guid.GetGUIDBasedOnClientUserGuid(guid);
+                        if (guid.Equals(guidresp))
+                        {
+                            var objuseraccountModel = await _repo.UserAccountDALRepo.ViewUserAccountByGUId(guid, userId);
+                            string filePath = string.Empty;
+                            filePath = _uploadfile.GetFile(objuseraccountModel.userAccounts.ProfileImg, _virtualPath);
+                            objuseraccountModel.userAccounts.ProfileImgUrl = filePath;
                             var response = new ClientUserAccountResponse();
                             if (objuseraccountModel.userAccounts != null || objuseraccountModel.UserRoles != null)
                             {
@@ -343,37 +431,46 @@ namespace WebApi.Controllers
             }
         }
         [HttpPost("insertClientUserAccount")]
-        public async Task<IActionResult> insertClientUserAccount(ClientUserAccountInsertRequest objModel)
+        
+        public async Task<IActionResult> insertClientUserAccount(IFormFile? ProfileImage, [FromQuery] ClientUserAccountModel objModel,
+        [FromQuery] string RoleNameList = "[{\"roleID\": 0,\"roleNameEffectiveDate\": \"2025-04-09\"}]")
         {
             try
             {
+                List<ClientRoleNameInUserAccount?> roleDataList = new List<ClientRoleNameInUserAccount>();
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
 
                 string responseMsg = string.Empty;
-                if (objModel == null || objModel.UserAccount == null || objModel.RoleNameList == null)
+                if (objModel == null)
                 {
                     return BadRequest("Invalid input data.");
                 }
-                else if (objModel?.UserAccount?.Active != "Y" && objModel?.UserAccount?.Active != "N")
-                {
-                    return BadRequest("UserAccount Active  invalid. Only 'Y' or 'N' are allowed.");
-                }
+                roleDataList = JsonConvert.DeserializeObject<List<ClientRoleNameInUserAccount>>(RoleNameList);
 
                 string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                 long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                 string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                objModel.UserAccount.CreatedBy = userId;
-                objModel.UserAccount.DBName = _sessionService.GetSession(Common.SessionVariables.DBName);
+                objModel.CreatedBy = userId;
+                objModel.DBName = _sessionService.GetSession(Common.SessionVariables.DBName);
+                if (!Request.HasFormContentType)
+                {
+                    return BadRequest("Unsupported media type, expected multipart/form-data.");
+                }
+
+                var form = await Request.ReadFormAsync();
+                var file = form.Files.FirstOrDefault();
                 if (!string.IsNullOrEmpty(response))
                 {
                     await _auditLogService.LogAction("", "insertClientUserAccount", "");
-                    DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
+                    string? FileName = ProfileImage?.FileName.Trim() ?? string.Empty;
+                    string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, ProfileImage, _physicalPath);
+                    DataTable dataTableRole = objModel.ConvertToDataTable(roleDataList, userId, 0);
                     using (IUowClientUser _repo = new UowClientUserAccount(_httpContextAccessor))
                     {
-                        var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
+                        var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel, ImageUpdated);
                         _repo.Commit();
 
                         if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
@@ -393,7 +490,7 @@ namespace WebApi.Controllers
                                         responseMsg = result.Msg ?? string.Empty;
                                         await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
                                                                             result.RetVal,
-                                                                            objModel.UserAccount.UserPassword);
+                                                                            objModel.UserPassword);
                                         break;
 
                                     default:
@@ -427,8 +524,11 @@ namespace WebApi.Controllers
         
         // Update User Account
         [HttpPut("ClientUpdateUserAccount")]
-        public async Task<IActionResult> ClientUpdateUserAccount([FromBody] ClientUserAccountUpdateRequest userAccount)
+        
+        public async Task<IActionResult> ClientUpdateUserAccount(IFormFile? ProfileImage, [FromQuery] UpdateClientUserAccountModel userAccount,
+        [FromQuery] string RoleNameList = "[{\"roleID\": 0,\"roleNameEffectiveDate\": \"2025-04-09\"}]")
         {
+            List<ClientRoleNameInUserAccount?> roleDataList = new List<ClientRoleNameInUserAccount>();
             if (userAccount == null)
             {
                 return BadRequest("Invalid input data.");
@@ -438,21 +538,30 @@ namespace WebApi.Controllers
             {
                 try
                 {
+                    if (!Request.HasFormContentType)
+                    {
+                        return BadRequest("Unsupported media type, expected multipart/form-data.");
+                    }
+                    roleDataList = JsonConvert.DeserializeObject<List<ClientRoleNameInUserAccount>>(RoleNameList);
+                    var form = await Request.ReadFormAsync();
+                    var file = form.Files.FirstOrDefault();
                     string responseMsg = string.Empty;
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    userAccount.UserAccount.CreatedBy = userId;
+                    userAccount.CreatedBy = userId;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
                         await _auditLogService.LogAction("", "ClientUpdateUserAccount", "");
-                        string? guidresp = await _guid.GetGUIDBasedOnClientUserGuid(userAccount.UserAccount.MasterGuid);
-                        if (userAccount.UserAccount.MasterGuid == guidresp)
+                        string? guidresp = await _guid.GetGUIDBasedOnClientUserGuid(userAccount.MasterGuid);
+                        if (userAccount.MasterGuid == guidresp)
                         {
-                            DataTable dataTableRole = userAccount.UserAccount.ConvertToDataTable(userAccount.RoleNameList, userId, userAccount.UserAccount.MasterGuid);
+                            string? FileName = ProfileImage?.FileName.Trim() ?? string.Empty;
+                            string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, ProfileImage, _physicalPath);
+                            DataTable dataTableRole = userAccount.ConvertToDataTable(roleDataList, userId, userAccount.MasterGuid);
                             using (IUowClientUser _repo = new UowClientUserAccount(_httpContextAccessor))
                             {
-                                var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
+                                var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount, ImageUpdated);
                                 _repo.Commit();
                                 if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
                                 {
