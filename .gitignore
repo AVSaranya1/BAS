@@ -26,3 +26,8 @@ Release/
 *.vscode/
 *.idea/
 *.resx
+/DataAccessLayer/bin/
+/DataAccessLayer/obj/
+/DataAccessLayer/bin/Debug/net8.0/DataAccessLayer.dll
+/DataAccessLayer/bin/Debug/net8.0/DataAccessLayer.pdb
+/DataAccessLayer/obj/Debug/net8.0/ref/DataAccessLayer.dll
