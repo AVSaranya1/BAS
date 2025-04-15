@@ -72,3 +72,10 @@
 /obj/Debug/net8.0/WebApi.GeneratedMSBuildEditorConfig.editorconfig
 /obj/Debug/net8.0/WebApi.MvcApplicationPartsAssemblyInfo.cs
 /obj/Debug/net8.0/WebApi.sourcelink.json
+/.vs/WebApi/v17/DocumentLayout.backup.json
+/DataAccessLayer/obj/Debug/net8.0/DataAccessLayer.dll
+/DataAccessLayer/obj/Debug/net8.0/DataAccessLayer.pdb
+/DataAccessLayer/obj/Debug/net8.0/refint/DataAccessLayer.dll
+/obj/Debug/net8.0/refint/WebApi.dll
+/obj/Debug/net8.0/WebApi.dll
+/obj/Debug/net8.0/WebApi.pdb
