@@ -12,14 +12,8 @@ using WebApi.Services.Implementation;
 using WebApi.Services.Interface;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Localization;
-using Microsoft.SqlServer.Management.Smo.Wmi;
 using WebApi.Middleware;
 using Microsoft.Extensions.FileProviders;
-
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -212,6 +206,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+        // Keep everything collapsed by default
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
     //SwaggerDoc Auth End
     app.UseSwaggerUI();

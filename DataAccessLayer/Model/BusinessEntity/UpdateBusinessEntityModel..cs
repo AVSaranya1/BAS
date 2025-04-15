@@ -1,4 +1,7 @@
-﻿namespace DataAccessLayer.Model.BusinessEntity;
+﻿using Microsoft.AspNetCore.Http;
+using System.Text.Json.Serialization;
+
+namespace DataAccessLayer.Model.BusinessEntity;
 
 public class UpdateBusinessEntityModel
 {
@@ -7,7 +10,9 @@ public class UpdateBusinessEntityModel
 
     public string? BusinessEntityDesc { get; set; }
 
+    [JsonIgnore]
     public string? Logo { get; set; }
+    public IFormFile? LogoFile { get; set; }
 
     public required string Address1 { get; set; }
 

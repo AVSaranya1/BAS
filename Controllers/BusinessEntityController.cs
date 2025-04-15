@@ -6,6 +6,7 @@ using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using System;
 using DataAccessLayer.Model.BusinessEntity;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApi.Controllers;
 
@@ -16,19 +17,28 @@ public class BusinessEntityController : ApiBaseController
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAuditLogService _auditLogService;
     private SessionService _sessionService;
+    private UploadFileServices _uploadfile;
     private readonly ILogger<BusinessEntityController> _logger;
+    private readonly string _physicalPath;
+    private readonly string _virtualPath;
+    private string _FolderName;
 
     public BusinessEntityController(
         ILogger<BusinessEntityController> logger,
         IConfiguration configuration,
         IHttpContextAccessor httpContextAccessor,
         SessionService sessionService,
-        IAuditLogService auditLogService) : base(configuration)
+        IAuditLogService auditLogService,
+        UploadFileServices uploadfile
+        ) : base(configuration)
     {
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
         _auditLogService = auditLogService;
         _sessionService = sessionService;
+        _uploadfile = uploadfile;
+        _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], _FolderName = Common.FileFolder.Logo) ?? Common.FileFolder.img;
+        _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], _FolderName = Common.FileFolder.Logo) ?? Common.FileFolder.img;
     }
 
     [HttpGet("getBusinessEntity")]
@@ -47,6 +57,10 @@ public class BusinessEntityController : ApiBaseController
                         switch (lstData.Count())
                         {
                             case > 0:
+                                foreach (var data in lstData)
+                                {
+                                    data.LogoPath = _uploadfile.GetFile(data.Logo, _virtualPath);
+                                }
                                 return Ok(lstData);
                             case 0:
                                 return BadRequest(Common.Messages.NoRecordsFound);
@@ -82,6 +96,7 @@ public class BusinessEntityController : ApiBaseController
                     var result = await _repo.EntityDALRepo.GetBusinessEntityById(id);
                     if (result != null)
                     {
+                        result.LogoPath = _uploadfile.GetFile(result.Logo, _virtualPath);
                         return Ok(result);
                     }
                     else
@@ -103,7 +118,7 @@ public class BusinessEntityController : ApiBaseController
     }
 
     [HttpPost("addBusinessEntity")]
-    public async Task<IActionResult> AddBusinessEntity(AddBusinessEntityModel objModel)
+    public async Task<IActionResult> AddBusinessEntity([FromForm] AddBusinessEntityModel objModel)
     {
         if (objModel == null)
         {
@@ -119,6 +134,18 @@ public class BusinessEntityController : ApiBaseController
                     using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
                     {
                         await _auditLogService.LogAction("", "AddBusinessEntity", "");
+                        string? FileName = objModel.LogoFile?.FileName.Trim() ?? string.Empty;
+                        string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, objModel.LogoFile, _physicalPath);
+
+                        if (string.IsNullOrEmpty(ImageUpdated))
+                        {
+                            return BadRequest(Common.Messages.InvalidData);
+                        }
+                        else
+                        {
+                            objModel.Logo = ImageUpdated;
+                        }
+
                         var result = await _repo.EntityDALRepo.AddBusinessEntityAsync(objModel);
                         _repo.Commit();
                         if (string.IsNullOrEmpty(result))
@@ -147,7 +174,7 @@ public class BusinessEntityController : ApiBaseController
     }
 
     [HttpPut("updateBusinessEntity")]
-    public async Task<IActionResult> UpdateBusinessEntity(UpdateBusinessEntityModel objModel)
+    public async Task<IActionResult> UpdateBusinessEntity([FromForm] UpdateBusinessEntityModel objModel)
     {
         if (objModel == null)
         {
@@ -163,7 +190,16 @@ public class BusinessEntityController : ApiBaseController
                     if (!string.IsNullOrEmpty(response))
                     {
                         await _auditLogService.LogAction("", "UpdateBusinessEntity", "");
-                        var result = await _repo.EntityDALRepo.UpdateBusinessEntityAsync(objModel);
+                        string? FileName = objModel.LogoFile?.FileName.Trim() ?? string.Empty;
+                        
+                        string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, objModel.LogoFile, _physicalPath);
+                        
+                        if (!string.IsNullOrEmpty(ImageUpdated))
+                        {
+                            objModel.Logo = ImageUpdated;
+                        }                        
+
+                            var result = await _repo.EntityDALRepo.UpdateBusinessEntityAsync(objModel);
                         _repo.Commit();
                         if (string.IsNullOrEmpty(result))
                         {

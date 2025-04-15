@@ -124,9 +124,9 @@ namespace DataAccessLayer.Model
         }
         public class FileFolder
         {
-            public static readonly string? UserImage = "UserImage";
-            
+            public static readonly string? UserImage = "UserImage";            
             public static readonly string Org="Org";
+            public static readonly string Logo = "Logo";
             public static readonly string img="/img";
         }
     }
