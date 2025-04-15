@@ -84,6 +84,7 @@ namespace DataAccessLayer.Model
         public string? OrgCode { get; set; }
         public string? OrgName { get; set; }
         public string? Logo { get; set; }
+        public string? LogoUrl { get; set; }
         public string? DBName { get; set; }
         public string? AutoID { get; set; }
         public string? InstanceName { get; set; }
