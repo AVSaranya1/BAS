@@ -7,10 +7,10 @@ namespace DataAccessLayer.Interface;
 public interface IBusinessEntityDAL
 {
     Task<IEnumerable<BusinessEntityModel>> GetAllBusinessEntity();
-    Task<BusinessEntityModel> GetBusinessEntityById(long Id);    
+    Task<BusinessEntityModel> GetBusinessEntityByGuiD(Guid Guid);    
     Task<string> AddBusinessEntityAsync(AddBusinessEntityModel model);
     Task<string> UpdateBusinessEntityAsync(UpdateBusinessEntityModel model);
-    Task<string> DeleteBusinessEntityAsync(DataTable deleteLevelDetailTable);
+    Task<string> DeleteBusinessEntityAsync(DataTable deleteBusinessEntityTable);
     Task<IEnumerable<DropDownModel>> GetMapParentBusinessUnit();
     Task<IEnumerable<DropDownModel>> GetMapEntityGroup();
 }

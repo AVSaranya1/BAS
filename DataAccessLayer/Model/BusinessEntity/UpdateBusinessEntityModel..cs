@@ -5,7 +5,7 @@ namespace DataAccessLayer.Model.BusinessEntity;
 
 public class UpdateBusinessEntityModel
 {
-    public long ID { get; set; }
+    public Guid Guid { get; set; }
     public required string BusinessEntityCode { get; set; }
 
     public string? BusinessEntityDesc { get; set; }

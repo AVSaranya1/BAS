@@ -83,8 +83,8 @@ public class BusinessEntityController : ApiBaseController
         }
     }
 
-    [HttpGet("getBusinessEntityByID/{id}")]
-    public async Task<IActionResult> GetBusinessEntityByID([FromRoute] long id)
+    [HttpGet("getBusinessEntityByGUID/{guid}")]
+    public async Task<IActionResult> GetBusinessEntityByGuiD([FromRoute] Guid guid)
     {
         try
         {
@@ -93,7 +93,7 @@ public class BusinessEntityController : ApiBaseController
             {
                 using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
                 {
-                    var result = await _repo.EntityDALRepo.GetBusinessEntityById(id);
+                    var result = await _repo.EntityDALRepo.GetBusinessEntityByGuiD(guid);
                     if (result != null)
                     {
                         result.LogoPath = _uploadfile.GetFile(result.Logo, _virtualPath);
@@ -227,7 +227,7 @@ public class BusinessEntityController : ApiBaseController
     }
 
     [HttpDelete("deleteBusinessEntity")]
-    public async Task<IActionResult> DeleteBusinessEntity(DeleteBusinessEntityModel deleteLevelDetail)
+    public async Task<IActionResult> DeleteBusinessEntity(DeleteBusinessEntityModel deleteBusinessEntity)
     {
         try
         {
@@ -238,14 +238,14 @@ public class BusinessEntityController : ApiBaseController
                 string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                 if (!string.IsNullOrEmpty(response))
                 {
-                    await _auditLogService.LogAction("", "DeleteLevelDetail", "");
-                    var dataTable = deleteLevelDetail.ConvertToDataTable(deleteLevelDetail.DeleteDataTable);
+                    await _auditLogService.LogAction("", "DeleteBusinessEntity", "");
+                    var dataTable = deleteBusinessEntity.ConvertToDataTable(deleteBusinessEntity.DeleteDataTable);
                     var result = await _repo.EntityDALRepo.DeleteBusinessEntityAsync(dataTable);
                     _repo.Commit();
                     if (string.IsNullOrEmpty(result))
                     {
                         _logger.LogError(Environment.NewLine);
-                        _logger.LogError("Bad Request occurred while accessing the DeleteLevelDetail function in Entity api controller");
+                        _logger.LogError("Bad Request occurred while accessing the DeleteBusinessEntity in BusinessEntity api controller");
                         return BadRequest();
                     }
                     else
