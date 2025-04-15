@@ -16,11 +16,11 @@ namespace DataAccessLayer.Implementation
         {
 
         }
-        public async Task<bool> DeleteLanguage(int Id)
+        public async Task<bool> DeleteLanguage(Guid? guid)
         {
             //try {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@LanguageId", Id);
+            parameters.Add("@Guid", guid);
              parameters.Add("@Mode", Common.PageMode.DELETE);
             var Result = await Connection.ExecuteAsync("sp_LanguageCreation",
                 parameters,
@@ -35,16 +35,16 @@ namespace DataAccessLayer.Implementation
 
         }
 
-        public async Task<List<LanguageModel>> GetAllLanguage()
+        public async Task<List<GetLanguageModel>> GetAllLanguage()
         {
             DynamicParameters parameters = new DynamicParameters();
-             parameters.Add("@LanguageId", 0);
+             parameters.Add("@Guid", null);
              parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return multi.Read<LanguageModel>().ToList();
+            return multi.Read<GetLanguageModel>().ToList();
         }
         public async Task<List<LanguageNameEnum>> GetAllLanguageinDropdown()
         {
@@ -59,24 +59,38 @@ namespace DataAccessLayer.Implementation
         }
                
 
-        public async Task<LanguageModel> GetLanguageById(int Id)
+        public async Task<GetLanguageModel> GetLanguageByGuid(Guid guid)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@LanguageId", Id);
+            parameters.Add("@Guid", guid);
              parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            var res = multi.Read<LanguageModel>().First();
+            var res = multi.Read<GetLanguageModel>().First();
 
             return res;
         }
-        
+
+
+        public async Task<GetLanguageModel> ViewLanguageByGuid(Guid guid)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Guid", guid);
+            parameters.Add("@Mode", Common.PageMode.VIEW);
+            var multi = await Connection.QueryMultipleAsync("sp_LanguageCreation",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var res = multi.Read<GetLanguageModel>().First();
+
+            return res;
+        }
         public async Task<bool> InsertUpdateLanguage(LanguageModel model)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@LanguageId", model.LanguageID);
+            parameters.Add("@Guid", model.Guid);
             parameters.Add("@LanguageCode", model.LanguageCode);
             parameters.Add("@LanguageName", model.LanguageName);
             parameters.Add("@Active", model.Active);
@@ -90,10 +104,10 @@ namespace DataAccessLayer.Implementation
 
             return res;
         }
-        public async Task<bool> UpdateLanguageAsync(int id,LanguageModel model)
+        public async Task<bool> UpdateLanguageAsync(UpdateLanguageModel model)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@LanguageId", model.LanguageID);
+            parameters.Add("@Guid", model.Guid);
             parameters.Add("@LanguageCode", model.LanguageCode);
             parameters.Add("@LanguageName", model.LanguageName);
             parameters.Add("@Active", model.Active);
