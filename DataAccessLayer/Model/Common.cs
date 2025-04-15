@@ -111,8 +111,7 @@ namespace DataAccessLayer.Model
             public const string GET_MAP_PARENT_BU= "GET_MAP_PARENT_BU";
             public const string GET_MAP_DIVISION = "GET_MAP_DIVISION";
             public const string GET_MAP_DEPARTMENT = "GET_MAP_DEPARTMENT";
-
-
+            public const string GET_MAP_PARENT_CostCenter= "GET_MAP_PARENT_CostCenter";
         }
         public class FileExtensions
         {
