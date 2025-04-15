@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 
 
 namespace DataAccessLayer.Model
@@ -10,8 +11,32 @@ namespace DataAccessLayer.Model
         public long LanguageID { get; set; }
         public string? LanguageCode { get; set; }
         public string? LanguageName { get; set; }
-        public string? Active { get; set; }
+        public bool? Active { get; set; }
+        [JsonIgnore]
         public long CreatedBy { get; set; }
+        [JsonIgnore]
+        public Guid Guid { get; } =Guid.NewGuid();
+        
+    }
+    public class UpdateLanguageModel
+    {
+        public long LanguageID { get; set; }
+        public string? LanguageCode { get; set; }
+        public string? LanguageName { get; set; }
+        public bool? Active { get; set; }
+        [JsonIgnore]
+        public long CreatedBy { get; set; }
+        public Guid? Guid { get; set; }
+    }
+    public class GetLanguageModel
+    {
+        public long LanguageID { get; set; }
+        public string? LanguageCode { get; set; }
+        public string? Description { get; set; }
+        public bool? Active { get; set; }
+        
+        public string? CreatedBy { get; set; }
+        public Guid? Guid { get; set; }
     }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum LanguageNameEnum
