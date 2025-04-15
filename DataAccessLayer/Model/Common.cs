@@ -72,6 +72,7 @@ namespace DataAccessLayer.Model
             public const string NoRecordsFound = "No Records Found";
             public const string InvalidData = "Invalid Data";
             public const string ConfirmPasswordNotSame = "Password and Confirm Password Not Same";
+            public const string ErrCostCenterCode = "Cost Center Code Field Required";
         }
         public class PageMode
         {
@@ -106,6 +107,12 @@ namespace DataAccessLayer.Model
             public const string VALIDATE_TOKEN= "VALIDATE_TOKEN";
             public const string GET_ORG_INDUSTRY_DROPDOWN= "GET_ORG_INDUSTRY_DROPDOWN";
             public const string VIEW_CLIENT_DETAIL="VIEW_CLIENT_DETAIL";
+            public const string GET_MAP_CostCenter= "GET_MAP_CostCenter";
+            public const string GET_MAP_PARENT_BU= "GET_MAP_PARENT_BU";
+            public const string GET_MAP_DIVISION = "GET_MAP_DIVISION";
+            public const string GET_MAP_DEPARTMENT = "GET_MAP_DEPARTMENT";
+
+
         }
         public class FileExtensions
         {
