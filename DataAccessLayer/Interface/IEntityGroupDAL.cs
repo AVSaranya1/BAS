@@ -9,12 +9,13 @@ namespace DataAccessLayer.Interface
 {
     public interface IEntityGroupDAL
     {
-      Task<List<EntityGroupModel>> GetEntityGroup(EntityGroupModel entityGroupModel);
-      Task<List<EntityGroupModel>> GetEntityGroupDetails(EntityGroupModel entityGroupModel);
+      Task<List<GetEntityGroupModel>> GetEntityGroup(GetEntityGroupModel entityGroupModel);
+      Task<List<GetEntityGroupModel>> GetEntityGroupDetails(GetEntityGroupModel entityGroupModel);
 
         Task<string> AddEntityGroup(EntityGroupModel entityGroupModel);
-        Task<string> EditEntityGroup(EntityGroupModel entityGroupModel);
+        Task<string> EditEntityGroup(UpdateEntityGroupModel entityGroupModel);
 
         Task<List<DeleteResultModel>> DeleteEntityGroup(List<EntityGroupDel> lstEntityGroupDel, string strMode,string strUserGuid);
+        Task<IEnumerable<DropDownModel>> GetMapEntityGroup();
     }
 }
