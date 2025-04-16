@@ -73,6 +73,10 @@ namespace DataAccessLayer.Model
             public const string InvalidData = "Invalid Data";
             public const string ConfirmPasswordNotSame = "Password and Confirm Password Not Same";
             public const string ErrCostCenterCode = "Cost Center Code Field Required";
+            public const string ErrEntityGroupCode = "Entity Group Code Field Required";
+            public const string ErrEntityGroupName = "Entity Group Name Field Required";
+            public const string ErrIsChild = "Is Child Field Required";
+
         }
         public class PageMode
         {
@@ -127,6 +131,7 @@ namespace DataAccessLayer.Model
             public static readonly string Org="Org";
             public static readonly string Logo = "Logo";
             public static readonly string img="/img";
+            public static readonly string EntityGroup= "EntityGroup";
         }
     }
     
