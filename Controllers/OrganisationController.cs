@@ -157,7 +157,29 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-
+        [HttpGet("GetCountryInDropdown")]
+        public async Task<IActionResult> GetCountryInDropdown()
+        {
+            try
+            {
+                var objOrganisationModel = await _repository.OrganisationDALRepo.GetCountryInDropdown();
+                // Log the action before returning response
+                await _auditLogService.LogAction("", "GetCountryInDropdown", token);
+                if (objOrganisationModel != null)
+                {
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
         [HttpGet("GetAllModules")]
         public async Task<IActionResult> GetAllModules()
         {
@@ -235,8 +257,6 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-
-
 
         [HttpPut("UpdateOrganisation")]
         public async Task<IActionResult> UpdateOrganisation([FromForm] OrganisationModel Org)
