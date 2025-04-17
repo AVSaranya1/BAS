@@ -178,6 +178,55 @@ namespace DataAccessLayer.Implementation
             }
         }
 
+        public async Task<ViewOrganisationModel> ViewOrganisationById(string strGuid)
+        {
+            ViewOrganisationModel Rst = new ViewOrganisationModel();
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            var parameters = new DynamicParameters();
+                            parameters.Add("@Guid", strGuid);
+                            parameters.Add("@Mode", Common.PageMode.VIEW);
+
+                            var multi = await connection.QueryMultipleAsync(
+                                "sp_OrganisationConfiguration",
+                                parameters,
+                                transaction: transaction,
+                                commandType: CommandType.StoredProcedure);
+
+                            var res = multi.Read<ViewOrganisationModel>().First();
+
+                            // Commit the transaction if everything is successful
+                            transaction.Commit();
+                            return res;
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error: {ex.Message}");
+                return Rst;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return Rst;
+            }
+        }
+
         public async Task<string> UpdateOrganisation(OrganisationModel model, string? ImageUpdated)
         {
             
