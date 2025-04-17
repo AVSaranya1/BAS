@@ -22,5 +22,6 @@ namespace DataAccessLayer.Interface
         Task<List<DataLocationDropdown>> DataLocationInDropdown();
         Task<List<MasterDropDownModel>> IndustryDropdown();
         Task<List<OrganisationModules>> GetAllModules();
+        Task<List<MasterDropDownModel>> GetCountryInDropdown();
     }
 }
