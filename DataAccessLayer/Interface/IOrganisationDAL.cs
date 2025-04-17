@@ -12,6 +12,7 @@ namespace DataAccessLayer.Interface
         Task<List<GetOrganisationModel>> GetAllOrganisation();
 
         Task<GetOrganisationModel> GetOrganisationById(string Guid);
+        Task<ViewOrganisationModel> ViewOrganisationById(string Guid);
 
 
         Task<string> InsertOrganisation(OrganisationModel OrganisationModel,string? ImageUpdated);
