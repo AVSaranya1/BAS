@@ -120,7 +120,7 @@ namespace WebApi.Controllers
             }
         }
         [HttpGet("getDivisionByDivisionGuid/{DivisionGuid}")]
-        public async Task<IActionResult> getClientDivisionByDivisionGuid(Guid DivisionGuid)
+        public async Task<IActionResult> getClientDivisionByDivisionGuid(string DivisionGuid)
         {
             try
             {
@@ -131,7 +131,7 @@ namespace WebApi.Controllers
                 }
                 using (IUowDivision _repo = new UowDivision(_httpContextAccessor))
                 {
-                    var responseSelect = new GetDivisionList();
+                    var responseSelect = new GetSelectedDivisionGuidList();
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
@@ -142,7 +142,7 @@ namespace WebApi.Controllers
                             var objClientDivisionModel = await _repo.ClientDivisionDALRepo.GetClientDivisionByGUId(DivisionGuid.ToString());
                             if (objClientDivisionModel.getClientDivisionModel != null)
                             {
-                                responseSelect=new GetDivisionList
+                                responseSelect=new GetSelectedDivisionGuidList
                                 {
                                     DivisionModel = objClientDivisionModel.getClientDivisionModel,
                                     BusinessEntityDivMapDatatable = objClientDivisionModel.getBusinessEntityDatatables,
