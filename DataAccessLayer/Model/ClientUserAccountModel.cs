@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Text.Json.Serialization;
 namespace DataAccessLayer.Model
@@ -62,13 +63,13 @@ namespace DataAccessLayer.Model
             return UserAccountRoleTable;
         }
         
-        [JsonIgnore]
+        [BindNever]
         public Int64? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
-        [JsonIgnore]
+        [BindNever]
         public string? Guid { get; set; }
-        [JsonIgnore]
+        [BindNever]
         public string? DBName { get; set; }
         public string? PlatformUser { get; set; }
         public DateTime? EffectiveDate { get; set; }
@@ -79,13 +80,13 @@ namespace DataAccessLayer.Model
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
-        [JsonIgnore]
+        [BindNever]
         public Int64 RoleID { get; set; }
         public long UserPolicy { get; set; }
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
-        [JsonIgnore]
+        [BindNever]
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
@@ -193,7 +194,7 @@ namespace DataAccessLayer.Model
             return UserAccountRoleTable;
         }
         
-        [JsonIgnore]
+        [BindNever]
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
@@ -209,13 +210,13 @@ namespace DataAccessLayer.Model
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
-        [JsonIgnore]
+        [BindNever]
         public Int64 RoleID { get; set; }
         public long UserPolicy { get; set; }
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
-        [JsonIgnore]
+        [BindNever]
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
