@@ -46,14 +46,12 @@ namespace DataAccessLayer.Implementation
             return (res, DeleteUserAccount.ToList());
 
         }
-
         public async Task<List<GetClientUserGroupModel?>> GetAllUserPolicy(long UpdatedBy, string ClientDBName)
         {
             
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGroupGUID", string.Empty);
             parameters.Add("@UpdatedBy", UpdatedBy);
-            
             parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
@@ -83,9 +81,14 @@ namespace DataAccessLayer.Implementation
         {
             
             DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@MinPasswordLength", model?.MinPasswordLength);
+            parameters.Add("@MaxPasswordLength", model?.MaxPasswordLength);
+            parameters.Add("@MustContainUppercase", model?.MustContainUppercase);
+            parameters.Add("@MustContainLowercase", model?.MustContainLowercase);
+            parameters.Add("@MustContainDigit", model?.MustContainDigit);
+            parameters.Add("@MustContainSpecialCharacter", model?.MustContainSpecialCharacter);
             parameters.Add("@UserGroupID", model?.UserGroupID);
             parameters.Add("@UserGroup", model?.UserGroupCode);
-            parameters.Add("@Active", model?.Active);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
             parameters.Add("@RestrictFailedLogin", model?.RestrictFailedLogin);
             parameters.Add("@FailedLoginCount", model?.FailedLoginCount);
@@ -93,14 +96,15 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@PasswordExpiryDays", model?.PasswordExpiryDays);
             parameters.Add("@PasswordExpiryAlertDays", model?.PasswordExpiryAlertDays);
             parameters.Add("@RestrictPasswordReuse", model?.RestrictPasswordReuse);
-            parameters.Add("@PasswordCount", model?.PasswordCount);
+            parameters.Add("@PasswordCount", model?.PreviousPasswordCannotReuse);
             parameters.Add("@2FAAuthentication", model?.twoFAAuthentication);
+            parameters.Add("@Enforce2FA", model?.Enforce2FA);
+            parameters.Add("@RetentionPolicy", model?.RetentionPolicy);
+            parameters.Add("@RetentionPolicyDays", model?.RetentionDuration);
+            parameters.Add("@BlockAccessonceAllAttemptConsumed", model?.BlockAccessOnceAllAttemptConsumed);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
-            parameters.Add("@LevelDetailGuid", model?.LevelDetailsGuid);
-            parameters.Add("@LevelGuid", model?.LevelGuid);
-            parameters.Add("@IdpUser", model?.IdpBasedUser);
-            
             parameters.Add("@Mode", Common.PageMode.ADD);
+            parameters.Add("@Guid", Guid.NewGuid());
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
@@ -126,6 +130,12 @@ namespace DataAccessLayer.Implementation
             
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGroupID", model?.UserGroupID);
+            parameters.Add("@MinPasswordLength", model?.MinPasswordLength);
+            parameters.Add("@MaxPasswordLength", model?.MaxPasswordLength);
+            parameters.Add("@MustContainUppercase", model?.MustContainUppercase);
+            parameters.Add("@MustContainLowercase", model?.MustContainLowercase);
+            parameters.Add("@MustContainDigit", model?.MustContainDigit);
+            parameters.Add("@MustContainSpecialCharacter", model?.MustContainSpecialCharacter);
             parameters.Add("@UserGroup", model?.UserGroupCode);
             parameters.Add("@Active", model?.Active);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -134,15 +144,16 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@PasswordExpiry", model?.PasswordExpiry);
             parameters.Add("@PasswordExpiryDays", model?.PasswordExpiryDays);
             parameters.Add("@RestrictPasswordReuse", model?.RestrictPasswordReuse);
-            parameters.Add("@PasswordCount", model?.PasswordCount);
+            parameters.Add("@PasswordCount", model?.PreviousPasswordCannotReuse);
+            parameters.Add("@RetentionPolicy", model?.RetentionPolicy);
+            parameters.Add("@RetentionPolicyDays", model?.RetentionDuration);
             parameters.Add("@2FAAuthentication", model?.twoFAAuthentication);
+            parameters.Add("@Enforce2FA", model?.Enforce2FA);
+            parameters.Add("@BlockAccessonceAllAttemptConsumed", model?.BlockAccessOnceAllAttemptConsumed);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
-            parameters.Add("@LevelDetailGuid", model?.LevelDetailsGuid);
-            parameters.Add("@LevelGuid", model?.LevelGuid);
-            parameters.Add("@IdpUser", model?.IdpBasedUser);
             parameters.Add("@UserGroupGUID", model?.UserPolicyGuid);
             parameters.Add("@Mode", Common.PageMode.EDIT);
-            
+            //Output parameters
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
