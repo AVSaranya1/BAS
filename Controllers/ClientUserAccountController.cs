@@ -476,7 +476,7 @@ namespace WebApi.Controllers
                         if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
                         {
                             if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
-                                 (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                 (result.OrgDetails != null))
                             {
                                 switch (result.RetVal)
                                 {
@@ -499,11 +499,7 @@ namespace WebApi.Controllers
                                         return NotFound("User Account Already Exists" + BadRequest());
                                 }
                             }
-                            else
-                            {
-                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                return BadRequest("Please Check Organization Name");
-                            }
+                            
                         }
                     }
                 }
