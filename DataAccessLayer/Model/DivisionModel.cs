@@ -109,10 +109,10 @@ namespace DataAccessLayer.Model
             DeleteDivisionDataTable.Columns.Add("Guid", typeof(Guid));
             foreach (var item in dataList)
             {
-                foreach (var deptGuid in item.DivisionGuidList)
+                foreach (var divGuid in item.DivisionGuidList)
                 {
                     var row = DeleteDivisionDataTable.NewRow();
-                    row["Guid"] = deptGuid;
+                    row["Guid"] = divGuid;
 
                     DeleteDivisionDataTable.Rows.Add(row);
                 }
@@ -139,6 +139,13 @@ namespace DataAccessLayer.Model
         public List<DropDownModel?> BusinessEntityDivMapDatatable { get; set; }
         public List<DropDownModel?> CostCenterDivisionDatatable { get; set; }
         public List<DropDownModel?> DepartmentDatatable { get; set; }
+    }
+    public class GetSelectedDivisionGuidList
+    {
+        public GetDivisionModel DivisionModel { get; set; }
+        public List<DropDownModel?> BusinessEntityDivMapDatatable { get; set; }
+        public List<DropDownModel?> CostCenterDivisionDatatable { get; set; }
+        public List<MultiSelectionDropDownModel?> DepartmentDatatable { get; set; }
     }
     public class DepartmentBusinessDatatable
     {
