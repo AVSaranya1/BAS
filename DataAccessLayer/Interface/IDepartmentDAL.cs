@@ -9,12 +9,12 @@ namespace DataAccessLayer.Interface
 {
     public interface IDepartmentDAL
     {
-        Task<DepartmentModel> GetDepartment(DepartmentInput departmentInput);  // ✅ No 'public' needed
-        Task<DepartmentModel> ViewDepartment(DepartmentInput departmentInput);  // ✅ No 'public' needed
+        Task<GetDept> GetDepartment(GetDepartmentInput departmentInput);  // ✅ No 'public' needed
+        Task<GetDeptView> ViewDepartment(GetDepartmentInput departmentInput);  // ✅ No 'public' needed
 
-        Task<string> InsertDepartmentDetails(DepartmentInput organisationLevelModel);
-        Task<string> UpdateDepartmentDetails(DepartmentInput organisationLevelModel);
-        Task<List<DeptDeleteResult>> DeleteDepartmentDetails(DepartmentInput departmentInput);
+        Task<string> InsertDepartmentDetails(AddDept addDept,string struserGuid);
+        Task<string> UpdateDepartmentDetails(EditDept editDept);
+        Task<List<DeptDeleteResult>> DeleteDepartmentDetails(List<DeleteDeptList> lstDeleteDept);
         
     }
 
