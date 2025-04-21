@@ -140,7 +140,7 @@ builder.Services.AddScoped<JwtService>(provider =>
 // Register other required services
 builder.Services.AddSingleton<IDbConnection>(_ => new SqlConnection());
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
+builder.Services.AddScoped<IUowDepartment, UowDepartment>();
 //AuditLog start
 builder.Services.AddScoped<IUowAuditLog, UowAuditLog>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
