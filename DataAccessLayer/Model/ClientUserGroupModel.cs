@@ -1,77 +1,109 @@
-﻿using System.Data;
+﻿using System.ComponentModel;
+using System.Data;
 using System.Text.Json.Serialization;
 
 namespace DataAccessLayer.Model
 {
     public class ClientUserGroupModel
     {
-        [JsonIgnore]
         public long UserGroupID { get; set; }
+        [DefaultValue(8)]
+        public long MinPasswordLength { get; set; }
+        [DefaultValue(14)]
+        public long MaxPasswordLength { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainUppercase { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainLowercase {  get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainDigit { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainSpecialCharacter {  get; set; }
         public string? UserGroupCode { get; set; }
-        public string? RestrictFailedLogin { get; set; }
+        public bool? RestrictFailedLogin { get; set; }
         public long FailedLoginCount { get; set; }
-        public string? PasswordExpiry { get; set; }
+        public bool? PasswordExpiry { get; set; }
         public long PasswordExpiryDays { get; set; }
         public long PasswordExpiryAlertDays { get; set; }
-        public string? RestrictPasswordReuse { get; set; }
-        public string? Active { get; set; }
+        public bool? RestrictPasswordReuse { get; set; }
+        [JsonIgnore]
+        public bool? Active { get; } = true;
         [JsonIgnore]
         public long CreatedBy { get; set; }
         public string? twoFAAuthentication { get; set; }
-        public string? LevelGuid { get; set; }
-        public string? LevelDetailsGuid { get; set; }
-        public int IdpBasedUser { get; set; }
-        public long PasswordCount { get; set; }
+        [DefaultValue(false)]
+        public bool? Enforce2FA { get; set; }
+        [DefaultValue(5)]
+        public long PreviousPasswordCannotReuse { get; set; }
+        [DefaultValue(false)]
+        public bool RetentionPolicy { get; set; }
+        public long RetentionDuration { get; set; }
         [JsonIgnore]
         public string? ClientDBName { get; set; }
+        public bool? BlockAccessOnceAllAttemptConsumed { get; set; }
     }
 
     public class GetClientUserGroupModel
     {
         public long UserGroupID { get; set; }
         public string? UserGroupCode { get; set; }
-        public string? RestrictFailedLogin { get; set; }
+        public bool? RestrictFailedLogin { get; set; }
         public long FailedLoginCount { get; set; }
-        public string? PasswordExpiry { get; set; }
+        public bool? PasswordExpiry { get; set; }
         public long PasswordExpiryDays { get; set; }
         public long PasswordExpiryAlertDays { get; set; }
-        public string? RestrictPasswordReuse { get; set; }
-        public string? Active { get; set; }
+        public bool? RestrictPasswordReuse { get; set; }
+        public bool? Active { get; set; }
         public string? CreatedBy { get; set; }
 
         public string? ModifiedBy { get; set; }
 
         public string? twoFAAuthentication { get; set; }
-        public long LevelID { get; set; }
-        public long LevelDetailsID { get; set; }
-        public int IdpBasedUser { get; set; }
+        
         public long PasswordCount { get; set; }
         public string? UserPolicyGuid { get; set; }
     }
     public class ClientUpdateUserGroupModel
     {
-        [JsonIgnore]
-        public string? ClientDBName { get; set; }
-
+        public string? UserPolicyGuid { get; set; }
         [JsonIgnore]
         public long UserGroupID { get; set; }
+        [DefaultValue(8)]
+        public long MinPasswordLength { get; set; }
+        [DefaultValue(14)]
+        public long MaxPasswordLength { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainUppercase { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainLowercase { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainDigit { get; set; }
+        [DefaultValue(true)]
+        public bool? MustContainSpecialCharacter { get; set; }
         public string? UserGroupCode { get; set; }
-        public string? RestrictFailedLogin { get; set; }
+        public bool? RestrictFailedLogin { get; set; }
         public long FailedLoginCount { get; set; }
-        public string? PasswordExpiry { get; set; }
+        public bool? PasswordExpiry { get; set; }
         public long PasswordExpiryDays { get; set; }
         public long PasswordExpiryAlertDays { get; set; }
-        public string? RestrictPasswordReuse { get; set; }
-        public string? Active { get; set; }
+        public bool? RestrictPasswordReuse { get; set; }
+        [DefaultValue(5)]
+        public long PreviousPasswordCannotReuse { get; set; }
+        [JsonIgnore]
+        public bool? Active { get; } = true;
         [JsonIgnore]
         public long CreatedBy { get; set; }
-
+        [DefaultValue(false)]
+        public bool? Enforce2FA { get; set; }
         public string? twoFAAuthentication { get; set; }
-        public string? LevelGuid { get; set; }
-        public string? LevelDetailsGuid { get; set; }
-        public int IdpBasedUser { get; set; }
-        public long PasswordCount { get; set; }
-        public string? UserPolicyGuid { get; set; }
+        [DefaultValue(5)]
+        public long PreviousPasswordCannotUse { get; set; }
+        [DefaultValue(false)]
+        public bool RetentionPolicy { get; set; }
+        public long RetentionDuration { get; set; }
+        [JsonIgnore]
+        public string? ClientDBName { get; set; }
+        public bool? BlockAccessOnceAllAttemptConsumed { get; set; }
     }
 
     public class DeleteClientUserGroup
