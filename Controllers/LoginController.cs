@@ -28,6 +28,7 @@ using System.Xml.Linq;
 using WebApi.Services;
 using WebApi.Services.Implementation;
 using WebApi.Services.Interface;
+using static DataAccessLayer.Model.TableVariables;
 using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 
@@ -49,7 +50,9 @@ namespace WebApi.Controllers
         private readonly TranslationService _translationService;
         string token = string.Empty;
         string userGuid = string.Empty;
-       // private readonly IServiceUrlProvider _serviceUrlProvider;
+        private UploadFileServices _uploadfile;
+        private readonly string _virtualPath;
+        // private readonly IServiceUrlProvider _serviceUrlProvider;
 
         /// <summary>
         /// private readonly ICommon _common;
@@ -65,7 +68,7 @@ namespace WebApi.Controllers
 
         public LoginController(ILogger<LoginController> logger, EncryptedDecrypt encryptedDecrypt,
         JwtService jwtService, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,
-        IAuditLogService auditLogService, TranslationService translationService) //IStringLocalizer<SharedResources> localizer)
+        IAuditLogService auditLogService, TranslationService translationService, UploadFileServices uploadFileServices) //IStringLocalizer<SharedResources> localizer)
         : base(configuration)
         {
             _logger = logger;
@@ -78,6 +81,8 @@ namespace WebApi.Controllers
             _translationService = translationService;
             //_serviceUrlProvider = serviceUrlProvider;
             // _common = common;
+            _uploadfile = uploadFileServices;
+            _virtualPath= Path.Combine(configuration["FileUpload:VirtualFilePath"], Common.FileFolder.Org) ?? Common.FileFolder.img;
         }
 
         [HttpPost("Get UserID")]
@@ -297,7 +302,8 @@ namespace WebApi.Controllers
             var objLogModel = new LoginModel { Guid = Guid };
             try
             {
-               
+                if (!Directory.Exists(_virtualPath))
+                    Directory.CreateDirectory(_virtualPath);
 
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
@@ -305,6 +311,12 @@ namespace WebApi.Controllers
                     await _auditLogService.LogAction(userGuid, "GetOrganisationWithDBDetails", token);
                     if (lstOrgDetails != null)
                     {
+                        foreach (var org in lstOrgDetails)
+                        {
+                            string filePath = string.Empty;
+                            filePath = _uploadfile.GetFile(org.Logo, _virtualPath);
+                            org.LogoUrl = filePath;
+                        }
                         // Serialize the list to a JSON string
                         var orgDetailsJson = System.Text.Json.JsonSerializer.Serialize(lstOrgDetails);
                         HttpContext?.Session.SetString(Common.SessionVariables.OrgDetails, orgDetailsJson);

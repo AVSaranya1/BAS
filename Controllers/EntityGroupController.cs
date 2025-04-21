@@ -1,14 +1,16 @@
 ﻿using Dapper;
 using DataAccessLayer.Model;
+using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
+using WebApi.Services;
 using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region}/[controller]")]
     [ApiController]
     public class EntityGroupController : ApiBaseController
     {
@@ -18,12 +20,21 @@ namespace WebApi.Controllers
         private readonly IAuditLogService? _auditLogService;
         string token = string.Empty;
         string userGuid = string.Empty;
+        private UploadFileServices _uploadfile;
+        private readonly IWebHostEnvironment _environment;
+        private readonly string _physicalPath;
+        private readonly string _virtualPath;
+        private string _FolderName;
 
-        public EntityGroupController(IUowEntityGroup? repository, IConfiguration configuration, ILogger<EntityGroupController>? logger, IAuditLogService auditLogService) : base(configuration)
+        public EntityGroupController(IUowEntityGroup? repository, IConfiguration configuration, ILogger<EntityGroupController>? logger, IAuditLogService auditLogService, UploadFileServices uploadFileServices,IWebHostEnvironment webHostEnvironment) : base(configuration)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger;
             _auditLogService = auditLogService;
+            _environment = webHostEnvironment;
+            _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], _FolderName = Common.FileFolder.EntityGroup) ?? Common.FileFolder.img;
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], _FolderName = Common.FileFolder.EntityGroup) ?? Common.FileFolder.img;
+            _uploadfile = uploadFileServices;
         }
 
 
@@ -35,13 +46,20 @@ namespace WebApi.Controllers
                 string token = string.Empty;
                 string userGuid = string.Empty;
 
-                var  entityGroupModel = new EntityGroupModel
+                var entityGroupModel = new GetEntityGroupModel
                 {
-                    Mode = "GET"
+                    Mode = Common.PageMode.GET,
                 };
 
                 var lsOrganisation = await _repository.entityGroupRepo.GetEntityGroup(entityGroupModel);
                 await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
+                string filePath = string.Empty;
+
+                foreach (var org in lsOrganisation)
+                {
+                    filePath = _uploadfile.GetFile(org.Logo, _virtualPath);
+                    org.LogoUrl = filePath;
+                }
                 return lsOrganisation switch
                 {
                     not null => Ok(lsOrganisation),
@@ -57,22 +75,28 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("GetEntityGroupDetails")]
-        public async Task<IActionResult> GetEntityGroupDetails(long ID)
+        public async Task<IActionResult> GetEntityGroupDetails(Guid? Guid)
         {
             try
             {
                 string token = string.Empty;
                 string userGuid = string.Empty;
 
-                var entityGroupModel = new EntityGroupModel
+                var entityGroupModel = new GetEntityGroupModel
                 {
-                    Mode = "GET",
-                    ID = ID
+                    Mode = Common.PageMode.GET,
+                    Guid = Guid
                 };
 
                 var lsOrganisation = await _repository.entityGroupRepo.GetEntityGroupDetails(entityGroupModel);
                 await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
+                string filePath = string.Empty;
 
+                foreach (var org in lsOrganisation)
+                {
+                    filePath = _uploadfile.GetFile(org.Logo, _virtualPath);
+                    org.LogoUrl = filePath;
+                }
                 return lsOrganisation switch
                 {
                     not null => Ok(lsOrganisation),
@@ -85,27 +109,70 @@ namespace WebApi.Controllers
                 return StatusCode(500);
             }
         }
-
-        [HttpGet("AddEntityGroup")]
-        public async Task<IActionResult> AddEntityGroup(string EntityCode, string EntityName, string EntityDescription, bool Ischild, long? parentEntityID,string? strLogo) //string? parentEntityGuid)
+        // Map Parent Entity Group Dropdown
+        [HttpGet("GetMapEntityGroupDropdown")]
+        public async Task<IActionResult> GetMapEntityGroupDropdown()
         {
             try
             {
+                string userGuid = HttpContext?.Session?.GetString(Common.SessionVariables.Guid);
+                if (!string.IsNullOrEmpty(userGuid))
+                {
+
+                    var lstData = await _repository.entityGroupRepo.GetMapEntityGroup();
+                    if (lstData != null)
+                    {
+                        switch (lstData.Count())
+                        {
+                            case > 0:
+                                return Ok(lstData);
+                            case 0:
+                                return BadRequest(Common.Messages.NoRecordsFound);
+                            default:
+                                return BadRequest();
+                        }
+                    }
+                }
+
+                else
+                {
+                    return BadRequest(Common.Messages.Login);
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+        [HttpPost("AddEntityGroup")]
+        public async Task<IActionResult> AddEntityGroup([FromForm] EntityGroupModel objModel, IFormFile? strLogo) //string? parentEntityGuid)
+        {
+            try
+            {
+                string EntityCode = objModel.EntityGroupCode;
+                string EntityName= objModel.EntityGroupName;
+                string EntityDescription = objModel.EntityGroupDesc;
+                bool? Ischild = objModel.IsChild;
+                Guid? parentEntityGuid = objModel.ParentEntityGroupGuid;
+                string? FileName = strLogo?.FileName.Trim() ?? string.Empty;
+                string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, strLogo, _physicalPath);
                 // Logging action (Ensure userGuid and token are properly assigned)
                 string userGuid = HttpContext?.Session?.GetString(Common.SessionVariables.Guid); 
                 string token = HttpContext?.Session?.GetString(Common.SessionVariables.Token); 
                 // Create the entity model
                 var entityGroupModel = new EntityGroupModel
                 {
-                    Mode = "Add",
+                    Mode = Common.PageMode.ADD,
                     EntityGroupCode = EntityCode,
                     EntityGroupName = EntityName,
                     EntityGroupDesc = EntityDescription,
                     IsChild = Ischild,
-                    //ParentEntityGroupGuid = parentEntityGuid,
-                    ParentID = parentEntityID,
+                    ParentEntityGroupGuid = parentEntityGuid,
+                    //ParentID = parentEntityID,
                     CreatedBy = userGuid,
-                    Logo = strLogo
+                    Logo = ImageUpdated
                 };
 
                 // Call repository method
@@ -139,27 +206,38 @@ namespace WebApi.Controllers
                 return StatusCode(500, "An unexpected error occurred.");
             }
         }
-        [HttpGet("EditEntityGroup")]
-        public async Task<IActionResult> EditEntityGroup(long ID,string EntityCode, string EntityName, string EntityDescription, bool Ischild, long? parentEntityID,string? strLogo)  //string? parentEntityGuid)
+        [HttpPut("EditEntityGroup")]
+        public async Task<IActionResult> EditEntityGroup([FromForm] UpdateEntityGroupModel updateEntityGroupModel,IFormFile? strLogo)  //string? parentEntityGuid)
         {
             try
             {
+                Guid? Guid = updateEntityGroupModel.Guid;
+                string EntityCode = updateEntityGroupModel.EntityGroupCode;
+                string EntityName = updateEntityGroupModel.EntityGroupName;
+                string EntityDescription = updateEntityGroupModel.EntityGroupDesc;
+                bool? Ischild = updateEntityGroupModel.IsChild;
+                Guid? parentEntityGuid = updateEntityGroupModel.ParentEntityGroupGuid;
+                
+
+                string? FileName = strLogo?.FileName.Trim() ?? string.Empty;
+
+                string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, strLogo, _physicalPath);
                 // Logging action (Ensure userGuid and token are properly assigned)
                 string userGuid = HttpContext?.Session?.GetString(Common.SessionVariables.Guid);
                 string token = HttpContext?.Session?.GetString(Common.SessionVariables.Token);
                 // Create the entity model
-                var entityGroupModel = new EntityGroupModel
+                var entityGroupModel = new UpdateEntityGroupModel
                 {
-                    Mode = "Edit",
+                    Mode = Common.PageMode.EDIT,
                     EntityGroupCode = EntityCode,
                     EntityGroupDesc = EntityDescription,
                     EntityGroupName = EntityName,
                     IsChild = Ischild,
-                    ParentID = parentEntityID,
-                   // ParentEntityGroupGuid = parentEntityGuid,
+                    //ParentID = parentEntityID,
+                    ParentEntityGroupGuid = parentEntityGuid,
                     CreatedBy = userGuid,
-                    ID = ID,
-                    Logo = strLogo
+                    Guid = Guid,
+                    Logo = ImageUpdated
                 };
 
                 // Call repository method
@@ -192,7 +270,7 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPost("DeleteEntityGroup")]
+        [HttpDelete("DeleteEntityGroup")]
         public async Task<IActionResult> DeleteEntityGroup([FromBody] List<EntityGroupDel> lstEntityGroupDel)
         {
             try
@@ -215,7 +293,7 @@ namespace WebApi.Controllers
                 return StatusCode(500, "An error occurred while deleting the entity group.");
             }
         }
-
+        
 
     }
 }

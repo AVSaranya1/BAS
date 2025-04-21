@@ -1,13 +1,18 @@
-﻿namespace DataAccessLayer.Model.BusinessEntity;
+﻿using Microsoft.AspNetCore.Http;
+using System.Text.Json.Serialization;
+
+namespace DataAccessLayer.Model.BusinessEntity;
 
 public class UpdateBusinessEntityModel
 {
-    public long ID { get; set; }
+    public Guid Guid { get; set; }
     public required string BusinessEntityCode { get; set; }
 
     public string? BusinessEntityDesc { get; set; }
 
+    [JsonIgnore]
     public string? Logo { get; set; }
+    public IFormFile? LogoFile { get; set; }
 
     public required string Address1 { get; set; }
 

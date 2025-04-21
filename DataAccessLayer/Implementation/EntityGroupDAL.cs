@@ -37,8 +37,8 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@EntityGroupDesc", entityGroupModel.EntityGroupDesc);
                     parameters.Add("@Logo", entityGroupModel.Logo);
                     parameters.Add("@IsChild", entityGroupModel.IsChild);
-                    //parameters.Add("@ParentGuid", entityGroupModel.ParentEntityGroupGuid);
-                    parameters.Add("@ParentID", entityGroupModel.ParentID);
+                    parameters.Add("@ParentGuid", entityGroupModel.ParentEntityGroupGuid);
+                    //parameters.Add("@ParentID", entityGroupModel.ParentID);
                     parameters.Add("@CreatedBy", entityGroupModel.CreatedBy);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
@@ -62,7 +62,7 @@ namespace DataAccessLayer.Implementation
                 return $"Error: {ex.Message}";
             }
         }
-        public async Task<string> EditEntityGroup(EntityGroupModel entityGroupModel)
+        public async Task<string> EditEntityGroup(UpdateEntityGroupModel entityGroupModel)
         {
             try
             {
@@ -74,13 +74,13 @@ namespace DataAccessLayer.Implementation
 
                     parameters.Add("@Mode", entityGroupModel.Mode);
                     parameters.Add("@EntityGroupCode", entityGroupModel.EntityGroupCode);
-                    parameters.Add("@ID", entityGroupModel.ID);
+                    
                     parameters.Add("@EntityGroupName", entityGroupModel.EntityGroupName);
                     parameters.Add("@EntityGroupDesc", entityGroupModel.EntityGroupDesc);
                     parameters.Add("@Logo", entityGroupModel.Logo);
                     parameters.Add("@IsChild", entityGroupModel.IsChild);
-                    //parameters.Add("@ParentGuid", entityGroupModel.ParentEntityGroupGuid);
-                    parameters.Add("@ParentID", entityGroupModel.ParentID);
+                    parameters.Add("@ParentGuid", entityGroupModel.ParentEntityGroupGuid);
+                    //parameters.Add("@ParentID", entityGroupModel.ParentID);
                     parameters.Add("@Guid", entityGroupModel.Guid);
                     parameters.Add("@CreatedBy", entityGroupModel.CreatedBy);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
@@ -166,11 +166,21 @@ namespace DataAccessLayer.Implementation
             }
         }
 
-
-
-        public async Task<List<EntityGroupModel>> GetEntityGroup(EntityGroupModel entityGroupModel)
+        public async Task<IEnumerable<DropDownModel>> GetMapEntityGroup()
         {
-            List<EntityGroupModel> lstResult = new List<EntityGroupModel>();
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Msg", dbType: DbType.String, size: 100, direction: ParameterDirection.Output);
+            parameters.Add("@Mode", "GET_MAP_ENTITY_GROUP");
+
+            return await Connection.QueryAsync<DropDownModel>("sp_EntityGroup",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task<List<GetEntityGroupModel>> GetEntityGroup(GetEntityGroupModel entityGroupModel)
+        {
+            List<GetEntityGroupModel> lstResult = new List<GetEntityGroupModel>();
             try
             {
 
@@ -193,7 +203,7 @@ namespace DataAccessLayer.Implementation
 
                             //transaction.Commit();
 
-                            return multi.Read<EntityGroupModel>().ToList();
+                            return multi.Read<GetEntityGroupModel>().ToList();
                         }
                         catch
                         {
@@ -216,9 +226,9 @@ namespace DataAccessLayer.Implementation
             }
         }
 
-        public async Task<List<EntityGroupModel>> GetEntityGroupDetails(EntityGroupModel entityGroupModel)
+        public async Task<List<GetEntityGroupModel>> GetEntityGroupDetails(GetEntityGroupModel entityGroupModel)
         {
-            List<EntityGroupModel> lstResult = new List<EntityGroupModel>();
+            List<GetEntityGroupModel> lstResult = new List<GetEntityGroupModel>();
             try
             {
 
@@ -231,7 +241,7 @@ namespace DataAccessLayer.Implementation
                         {
                             DynamicParameters parameters = new DynamicParameters();
                             parameters.Add("@Mode", Common.PageMode.GET);
-                            parameters.Add("@ID", entityGroupModel.ID);
+                            parameters.Add("@Guid", entityGroupModel.Guid);
                             parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                             var multi = await connection.QueryMultipleAsync(
@@ -242,7 +252,7 @@ namespace DataAccessLayer.Implementation
 
                             //transaction.Commit();
 
-                            return multi.Read<EntityGroupModel>().ToList();
+                            return multi.Read<GetEntityGroupModel>().ToList();
                         }
                         catch
                         {

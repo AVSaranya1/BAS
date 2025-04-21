@@ -53,14 +53,38 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getLanguageById/{id}")]
-        public async Task<IActionResult> GetLanguageById(int id)
+        [HttpGet("getLanguageByGuid/{Guid}")]
+        public async Task<IActionResult> GetLanguageByGuId(Guid Guid)
         {
             try
             {
                 using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
-                    var objLanguageModel = await _repo.LanguageDALRepo.GetLanguageById(id);
+                    var objLanguageModel = await _repo.LanguageDALRepo.GetLanguageByGuid(Guid);
+                    if (objLanguageModel != null)
+                    {
+                        return Ok(objLanguageModel);
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+        [HttpGet("ViewLanguageByGuid/{Guid}")]
+        public async Task<IActionResult> ViewLanguageByGuId(Guid Guid)
+        {
+            try
+            {
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
+                {
+                    var objLanguageModel = await _repo.LanguageDALRepo.ViewLanguageByGuid(Guid);
                     if (objLanguageModel != null)
                     {
                         return Ok(objLanguageModel);
@@ -105,11 +129,11 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpPut("UpdateLanguage/{id}")]
-        public async Task<IActionResult> UpdateLanguage(int id, LanguageModel objModel)
+        [HttpPut("UpdateLanguage")]
+        public async Task<IActionResult> UpdateLanguage(UpdateLanguageModel objModel)
         {
 
-            if (objModel == null || id != objModel.LanguageID)
+            if (objModel == null)
             {
                 return BadRequest(Common.Messages.InvalidData);
             }
@@ -119,7 +143,7 @@ namespace WebApi.Controllers
                 {
                     using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                     {
-                        var result = await _repo.LanguageDALRepo.UpdateLanguageAsync(id, objModel);
+                        var result = await _repo.LanguageDALRepo.UpdateLanguageAsync(objModel);
                         var msg = "User account updated successfully.";
                         _repo.Commit();
                         if (result)
@@ -142,14 +166,14 @@ namespace WebApi.Controllers
                 }
             }
         }
-        [HttpGet("deleteLanguage/{id}")]
-        public async Task<IActionResult> DeleteLanguage(int id)
+        [HttpGet("deleteLanguage/{guid}")]
+        public async Task<IActionResult> DeleteLanguage(Guid? guid)
         {
             try
             {
                 using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
-                    var result = await _repo.LanguageDALRepo.DeleteLanguage(id);
+                    var result = await _repo.LanguageDALRepo.DeleteLanguage(guid);
                     _repo.Commit();
                     if (result)
                     {

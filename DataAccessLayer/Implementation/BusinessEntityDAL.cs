@@ -22,10 +22,10 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
             transaction: Transaction,
             commandType: CommandType.StoredProcedure);
     }
-    public async Task<BusinessEntityModel> GetBusinessEntityById(long id)
+    public async Task<BusinessEntityModel> GetBusinessEntityByGuiD(Guid guid)
     {
         DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@ID", id);
+        parameters.Add("@GUID", guid);
         parameters.Add("@ReturnValue", dbType: DbType.String, size: 100, direction: ParameterDirection.Output);
         parameters.Add("@Mode", Common.PageMode.GET_DETAIL);
         
@@ -38,7 +38,7 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
     public async Task<string> UpdateBusinessEntityAsync(UpdateBusinessEntityModel model)
     {
         DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@ID", model.ID);
+        parameters.Add("@GUID", model.Guid);
         parameters.Add("@BusinessEntityCode", model.BusinessEntityCode);
         parameters.Add("@BusinessEntityDesc", model.BusinessEntityDesc);
         parameters.Add("@Logo", model.Logo);
@@ -128,7 +128,7 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
     public async Task<string> DeleteBusinessEntityAsync(DataTable deleteData)
     {
         DynamicParameters parameters = new DynamicParameters();
-        parameters.Add("@dtBusinessEntity", deleteData.AsTableValuedParameter("utt_DeleteById"));
+        parameters.Add("@dtBusinessEntity", deleteData.AsTableValuedParameter("utt_DeleteByGUID"));
         parameters.Add("@ReturnValue", dbType: DbType.String, size: 100, direction: ParameterDirection.Output);
         parameters.Add("@Mode", Common.PageMode.DELETE);
 

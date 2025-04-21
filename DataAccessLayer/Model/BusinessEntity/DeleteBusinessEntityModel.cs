@@ -32,7 +32,7 @@ public class DeleteBusinessEntityModel
 
 public class DeleteBusinessEntityModelList
 {
-    public long? ID { get; set; }
+    public Guid? Guid { get; set; }
 }
 
 //public class DeleteBusinessEntityModelResult

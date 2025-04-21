@@ -26,7 +26,7 @@ namespace WebApi.Controllers
         }
         
         [HttpGet("GetAllDepartment")]
-        public async Task<IActionResult> GetAllDepartment([FromQuery] string? LevelDetailGUID = "067427BF-2613-4C17-89DB-B1D00704AD15")
+        public async Task<IActionResult> GetAllDepartment()
         {
             try
             {
@@ -42,28 +42,24 @@ namespace WebApi.Controllers
                 if (HttpContext?.Session != null)
                 {
                     struserGuid = HttpContext.Session.GetString(Common.SessionVariables.Guid) ?? string.Empty;
-                    if (string.IsNullOrEmpty(LevelDetailGUID))
-                    {
-                        strLevelDetailGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelDetailGUID) ?? string.Empty;
-                    }
-                    else
-                    {
-                        strLevelDetailGUID = LevelDetailGUID;
-                    }
+                    //if (string.IsNullOrEmpty(LevelDetailGUID))
+                    //{
+                    //    strLevelDetailGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelDetailGUID) ?? string.Empty;
+                    //}
+                    //else
+                    //{
+                    //    strLevelDetailGUID = LevelDetailGUID;
+                    //}
                     strLevelGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelGUID) ?? string.Empty;
                     strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
                 }
 
-                var departmentInput = new DepartmentInput
+                var departmentInput = new GetDepartmentInput
                 {
-                    Mode = "GET_DETAIL",
-                     UpdatedGuidBy = struserGuid,
-                    LevelDetailGUID = strLevelDetailGUID,
-                    DeptGUID ="",
-                    Function = "",
-                    //TimeZoneID =0
+                    Mode = "GET",
+                    UpdatedGuidBy = struserGuid,
 
-                 };
+                };
                 // Retrieve session values if session exists
                 var lsOrganisation = await _repository.DepartmentDALRepo.GetDepartment(departmentInput);
 
@@ -87,7 +83,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("GetDepartmentDetails")]
-        public async Task<IActionResult> GetDepartmentDetails([FromQuery] string DepartmentGuid,[FromQuery] string? LevelDetailGUID = "067427BF-2613-4C17-89DB-B1D00704AD15")
+        public async Task<IActionResult> GetDepartmentDetails([FromQuery] string DepartmentGuid)
         {
             try
             {
@@ -103,26 +99,14 @@ namespace WebApi.Controllers
                 if (HttpContext?.Session != null)
                 {
                     struserGuid = HttpContext.Session.GetString(Common.SessionVariables.Guid) ?? string.Empty;
-                    if (string.IsNullOrEmpty(LevelDetailGUID))
-                    {
-                        strLevelDetailGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelDetailGUID) ?? string.Empty;
-                    }
-                    else
-                    {
-                        strLevelDetailGUID = LevelDetailGUID;
-                    }
-                    strLevelGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelGUID) ?? string.Empty;
                     strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
                 }
 
-                var departmentInput = new DepartmentInput
+                var departmentInput = new GetDepartmentInput
                 {
                     Mode = "GET_DETAIL",
                     UpdatedGuidBy = struserGuid,
-                    LevelDetailGUID = strLevelDetailGUID,
                     DeptGUID = DepartmentGuid,
-                    Function = "",
-                    //TimeZoneID =0
 
                 };
                 // Retrieve session values if session exists
@@ -147,7 +131,7 @@ namespace WebApi.Controllers
             }
         }
         [HttpGet("ViewDepartmentDetails")]
-        public async Task<IActionResult> ViewDepartmentDetails([FromQuery] string DepartmentGuid, [FromQuery] string? LevelDetailGUID = "067427BF-2613-4C17-89DB-B1D00704AD15")
+        public async Task<IActionResult> ViewDepartmentDetails([FromQuery] string DepartmentGuid)
         {
             try
             {
@@ -163,26 +147,15 @@ namespace WebApi.Controllers
                 if (HttpContext?.Session != null)
                 {
                     struserGuid = HttpContext.Session.GetString(Common.SessionVariables.Guid) ?? string.Empty;
-                    if (string.IsNullOrEmpty(LevelDetailGUID))
-                    {
-                        strLevelDetailGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelDetailGUID) ?? string.Empty;
-                    }
-                    else
-                    {
-                        strLevelDetailGUID = LevelDetailGUID;
-                    }
                     strLevelGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelGUID) ?? string.Empty;
                     strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
                 }
 
-                var departmentInput = new DepartmentInput
+                var departmentInput = new GetDepartmentInput
                 {
                     Mode = "VIEW",
                     UpdatedGuidBy = struserGuid,
-                    LevelDetailGUID = strLevelDetailGUID,
                     DeptGUID = DepartmentGuid,
-                    Function = "",
-                    //TimeZoneID =0
 
                 };
                 // Retrieve session values if session exists
@@ -208,20 +181,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("InsertDepartmentDetails")]
-        public async Task<IActionResult> InsertDepartmentDetails(
-            
-            [FromQuery] string DepartmentCode,
-            [FromQuery] string DepartmentDescription,
-            [FromQuery] long? ReferenceID,
-            [FromQuery] string? ColourCode,
-            [FromBody] List<DepartmentDetail> lstDepartmentDetail,
-            [FromQuery] string? LevelDetailGUID = "067427BF-2613-4C17-89DB-B1D00704AD15"
-            //, // Change to FromBody
-            //[FromHeader(Name = "UserGuid")] string userGuid,
-            //[FromHeader(Name = "LevelDetailGUID")] string levelDetailGuid,
-            //[FromHeader(Name = "LevelGUID")] string levelGuid,
-            //[FromHeader(Name = "TimeZoneID")] string? timeZoneID
-            )
+        public async Task<IActionResult> InsertDepartmentDetails(AddDept addDept)
         {
             try
             {
@@ -238,27 +198,14 @@ namespace WebApi.Controllers
                     strLevelGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelGUID) ?? string.Empty;
                     strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
                 }
-                if(String.IsNullOrEmpty(strLevelDetailGUID))
+             
+                var result = await _repository.DepartmentDALRepo.InsertDepartmentDetails(addDept,struserGuid);
+                return result switch
                 {
-                    strLevelDetailGUID = LevelDetailGUID;
-                }
-                var departmentInput = new DepartmentInput
-                {
-                    DeptCode = DepartmentCode,
-                    DeptDesc = DepartmentDescription,
-                    ReferenceID = ReferenceID,
-                    ColourCode = ColourCode,
-                    LevelDetailGUID = strLevelDetailGUID,
-                    LevelGUID = strLevelGUID,
-                    UpdatedGuidBy = userGuid,
-                    lstDepart = lstDepartmentDetail,
-                    TimeZoneID = int.TryParse(strTimeZoneID, out int tz) ? tz : 0
+                    "1" => Ok(new { Message = "Department details inserted successfully." }),
+                    "0" => Conflict(new { Message = "Department Code already exists." }),
+                    _ => BadRequest(new { Message = "Insertion failed." })
                 };
-
-                var result = await _repository.DepartmentDALRepo.InsertDepartmentDetails(departmentInput);
-                return result == "1"
-                    ? Ok(new { Message = "Department details inserted successfully." })
-                    : BadRequest(new { Message = "Insertion failed." });
             }
             catch (Exception ex)
             {
@@ -269,14 +216,7 @@ namespace WebApi.Controllers
 
 
         [HttpPost("UpdateDepartmentDetails")]
-        public async Task<IActionResult> UpdateDepartmentDetails(
-         [FromQuery] string DeptGuid,
-         [FromQuery] string DepartmentCode,
-         [FromQuery] string DepartmentDescription,
-         [FromQuery] long? ReferenceID,
-         [FromQuery] string? ColourCode,
-         [FromBody] List<DepartmentDetail> lstDepartmentDetail,
-         [FromQuery] string? LevelDetailGUID = "067427BF-2613-4C17-89DB-B1D00704AD15")
+        public async Task<IActionResult> UpdateDepartmentDetails(EditDept editDept)
         {
             try
             {
@@ -292,29 +232,15 @@ namespace WebApi.Controllers
                     strLevelGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelGUID) ?? string.Empty;
                     strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
                 }
-                if (String.IsNullOrEmpty(strLevelDetailGUID))
-                {
-                    strLevelDetailGUID = LevelDetailGUID;
-                }
-                var departmentInput = new DepartmentInput
-                {
-                    Mode = "EDIT",
-                    DeptCode = DepartmentCode,
-                    DeptGUID = DeptGuid,
-                    DeptDesc = DepartmentDescription,
-                    ReferenceID = ReferenceID,
-                    ColourCode = ColourCode,
-                    LevelDetailGUID = strLevelDetailGUID,
-                    LevelGUID = strLevelGUID,
-                    UpdatedGuidBy = struserGuid,
-                    lstDepart = lstDepartmentDetail,
-                    TimeZoneID = string.IsNullOrEmpty(strTimeZoneID) ? 0 : Convert.ToInt32(strTimeZoneID)
-                };
+               
+                var result = await _repository.DepartmentDALRepo.UpdateDepartmentDetails(editDept);
 
-                var result = await _repository.DepartmentDALRepo.UpdateDepartmentDetails(departmentInput);
-                return result == "1"
-                 ? Ok(new { Message = "Department details update successfully." })
-                 : BadRequest(new { Message = "Insertion failed." });
+                return result switch
+                {
+                    "1" => Ok(new { Message = "Department details Updated successfully." }),
+                    "0" => Conflict(new { Message = "Record is not exists." }),
+                    _ => BadRequest(new { Message = "Update failed." })
+                };
             }
             catch (Exception ex)
             {
@@ -324,13 +250,11 @@ namespace WebApi.Controllers
         }
 
 
-    [HttpPost("DeleteDepartmentDetails")]
-    public async Task<IActionResult> DeleteDepartmentDetails(
-    [FromBody] List<DepartmentDetail> lstDepartmentDetail,
-    [FromQuery] string? LevelDetailGUID = "067427BF-2613-4C17-89DB-B1D00704AD15")
-    {
-        try
+        [HttpPost("DeleteDepartmentDetails")]
+        public async Task<IActionResult> DeleteDepartmentDetails(List<DeleteDeptList> lstDeleteDept)
         {
+            try
+            {
 
                 string struserGuid = string.Empty;
                 string strLevelDetailGUID = string.Empty;
@@ -344,41 +268,29 @@ namespace WebApi.Controllers
                     strLevelGUID = HttpContext.Session.GetString(Common.SessionVariables.LevelGUID) ?? string.Empty;
                     strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
                 }
-                if (String.IsNullOrEmpty(strLevelDetailGUID))
+         
+
+                var result = await _repository.DepartmentDALRepo.DeleteDepartmentDetails(lstDeleteDept);
+
+                // Convert to ArrayList for flexibility
+                ArrayList resultList = new ArrayList(result);
+
+                switch (resultList.Count)
                 {
-                    strLevelDetailGUID = LevelDetailGUID;
+                    case > 0:
+                        return Ok(new { Message = "Department details deleted successfully.", Details = result });
+                    default:
+                        return BadRequest(new { Message = "Deletion failed." });
                 }
-                var departmentInput = new DepartmentInput
+            }
+            catch (Exception ex)
             {
-                LevelDetailGUID = strLevelDetailGUID,
-                LevelGUID = strLevelGUID,
-                UpdatedGuidBy = userGuid,
-                lstDepart = lstDepartmentDetail,
-                TimeZoneID = string.IsNullOrEmpty(strTimeZoneID) ? 0 : Convert.ToInt32(strTimeZoneID),
-                Mode = "DELETE"
-            };
-
-            var result = await _repository.DepartmentDALRepo.DeleteDepartmentDetails(departmentInput);
-
-            // Convert to ArrayList for flexibility
-            ArrayList resultList = new ArrayList(result);
-
-            switch (resultList.Count)
-            {
-                case > 0:
-                    return Ok(new { Message = "Department details deleted successfully.", Details = result });
-                default:
-                    return BadRequest(new { Message = "Deletion failed." });
+                _logger.LogError(ex, "Error deleting department details.");
+                return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
             }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting department details.");
-            return StatusCode(500, new { Message = "Internal Server Error", Error = ex.Message });
-        }
+
+
+
     }
-
-
-
-}
 }
