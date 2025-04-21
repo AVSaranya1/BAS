@@ -157,7 +157,29 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-
+        [HttpGet("GetCountryInDropdown")]
+        public async Task<IActionResult> GetCountryInDropdown()
+        {
+            try
+            {
+                var objOrganisationModel = await _repository.OrganisationDALRepo.GetCountryInDropdown();
+                // Log the action before returning response
+                await _auditLogService.LogAction("", "GetCountryInDropdown", token);
+                if (objOrganisationModel != null)
+                {
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
         [HttpGet("GetAllModules")]
         public async Task<IActionResult> GetAllModules()
         {
@@ -209,6 +231,32 @@ namespace WebApi.Controllers
             }
         }
 
+        [HttpGet("ViewOrganisationById/{Guid}")]
+        public async Task<IActionResult> ViewOrganisationById(string Guid)
+        {
+            try
+            {
+                var objOrganisationModel = await _repository.OrganisationDALRepo.ViewOrganisationById(Guid);
+                // Log the action before returning response
+                await _auditLogService.LogAction(userGuid, "ViewOrganisationById", token);
+                if (objOrganisationModel != null)
+                {
+                    string? filePath = string.Empty;
+                    filePath = _uploadfile.GetFile(objOrganisationModel.Logo, _virtualPath);
+                    objOrganisationModel.LogoUrl = filePath;
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
 
         [HttpPut("UpdateOrganisation")]
         public async Task<IActionResult> UpdateOrganisation([FromForm] OrganisationModel Org)
