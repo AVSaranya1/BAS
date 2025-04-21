@@ -37,6 +37,8 @@ namespace DataAccessLayer.Uow.Implementation
             var context = _httpContextAccessor.HttpContext;
             if (context?.Items.TryGetValue("connection", out var conn) == true && conn is string connectionString)
             {
+                connectionString = connectionString.Replace("Multiple Active Result Sets", "MultipleActiveResultSets")
+                                   .Replace("Trust Server Certificate", "TrustServerCertificate");
                 return connectionString;
             }
             throw new InvalidOperationException("Connection string not found in HttpContext.");
