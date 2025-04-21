@@ -65,8 +65,8 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getClientUserPolicyByGuId/{GUId}")]
-        public async Task<IActionResult> getClientUserPolicyByGuId(string GUId)
+        [HttpGet("getClientUserPolicyByGuId/{userPolicyGuid}")]
+        public async Task<IActionResult> getClientUserPolicyByGuId(string userPolicyGuid)
         {
             try
             {
@@ -77,11 +77,11 @@ namespace WebApi.Controllers
                     {
                         await _auditLogService.LogAction("", "getUserPolicyByGuId", "");
                         string ClientDBName = _sessionService.GetSession(Common.SessionVariables.DBName);
-                        string GuidUserPolicy = await _guid.GetGUIDBasedOnClientUserPolicy(GUId, ClientDBName);
+                        string GuidUserPolicy = await _guid.GetGUIDBasedOnClientUserPolicy(userPolicyGuid, ClientDBName);
                         
-                        if (GuidUserPolicy == GUId)
+                        if (GuidUserPolicy == userPolicyGuid)
                         {
-                            var objUserGroupModel = await _repo.UserGroupDALRepo.GetUserPolicyByGUId(GUId, ClientDBName);
+                            var objUserGroupModel = await _repo.UserGroupDALRepo.GetUserPolicyByGUId(userPolicyGuid, ClientDBName);
                             if (objUserGroupModel != null)
                             {
                                 return Ok(objUserGroupModel);
