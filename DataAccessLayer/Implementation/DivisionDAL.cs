@@ -56,10 +56,10 @@ namespace DataAccessLayer.Implementation
             return multi.Read<GetDivisionModel>().ToList();
         }
 
-        public async Task<(GetDivisionModel? getClientDivisionModel,  List<DropDownModel?> getBusinessEntityDatatables, List<DropDownModel>? getCostCenterDivisionDatatables, List<DropDownModel?> getDepartmentDatatables)> GetClientDivisionByGUId(string GUId)
+        public async Task<(GetDivisionModel? getClientDivisionModel,  List<DropDownModel?> getBusinessEntityDatatables, List<DropDownModel>? getCostCenterDivisionDatatables, List<MultiSelectionDropDownModel?> getDepartmentDatatables)> GetClientDivisionByGUId(string GUId)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@DivisionGUId", GUId);
+            parameters.Add("@DivisionGUId", Guid.Parse(GUId));
             parameters.Add("@Mode", Common.PageMode.GET_DETAIL);
             var multi = await Connection.QueryMultipleAsync("sp_Division",
                                                             parameters,
@@ -68,7 +68,7 @@ namespace DataAccessLayer.Implementation
             var res = multi.Read<GetDivisionModel>().FirstOrDefault();
             var businessEntityDatatables = (await multi.ReadAsync<DropDownModel>())?.ToList();
             var CostCenterTable = (await multi.ReadAsync<DropDownModel>())?.ToList();
-            var DeptTable = (await multi.ReadAsync<DropDownModel>())?.ToList();
+            var DeptTable = (await multi.ReadAsync<MultiSelectionDropDownModel>())?.ToList();
 
             return (res, businessEntityDatatables, CostCenterTable, DeptTable);
         }
