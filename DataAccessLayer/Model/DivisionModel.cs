@@ -12,108 +12,88 @@ namespace DataAccessLayer.Model
     {
         public DataTable DepartmentCatTable= new DataTable();
         public DataTable ShiftTable = new DataTable();
-        public DataTable ConvertToDataTable(List<DepartmentCategoryDatatable?> models)
+        public DataTable ConvertToDataTable(List<DepartmentBusinessDatatable> dataList)
         {
+            DepartmentCatTable.Columns.Add("DeptGuid", typeof(Guid));
+            DepartmentCatTable.Columns.Add("BusinessEntityGuid", typeof(Guid));
+            DepartmentCatTable.Columns.Add("CostCenterGuid", typeof(Guid));
 
-            // Define columns dynamically based on the model's properties
-            var properties = typeof(DepartmentCategoryDatatable).GetProperties();
-            
-            
-            foreach (var property in properties)
+            foreach (var item in dataList)
             {
-                DepartmentCatTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
-            }
-            // Add rows dynamically based on the model data
-            foreach (var model in models)
-            {
-                DataRow row = DepartmentCatTable.NewRow();
-                foreach (var property in properties)
+                foreach (var deptGuid in item.DeptGuidList)
                 {
-                    
-                    row[property.Name] = property.GetValue(model) ?? DBNull.Value;
+                    var row = DepartmentCatTable.NewRow();
+                    row["DeptGuid"] = deptGuid;
+                    row["BusinessEntityGuid"] = item.BusinessEntityGuid;
+                    row["CostCenterGuid"] = item.CostCenterGuid;
+                    DepartmentCatTable.Rows.Add(row);
                 }
-                DepartmentCatTable.Rows.Add(row);
             }
+
             return DepartmentCatTable;
         }
-        public DataTable ConvertToDataTable(List<ShiftMapDivisionDatatable?> models)
-        {
 
-            // Define columns dynamically based on the model's properties
-            var properties = typeof(ShiftMapDivisionDatatable).GetProperties();
-
-
-            foreach (var property in properties)
-            {
-                ShiftTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
-            }
-            // Add rows dynamically based on the model data
-            foreach (var model in models)
-            {
-                DataRow row = ShiftTable.NewRow();
-                foreach (var property in properties)
-                {
-
-                    row[property.Name] = property.GetValue(model) ?? DBNull.Value;
-                }
-                ShiftTable.Rows.Add(row);
-            }
-            return ShiftTable;
-        }
         [JsonIgnore]
         public long CreatedBy { get; set; }
+        [JsonIgnore]
+        public Guid? DivisionGuid { get; } = Guid.NewGuid();
         public string? Division_Code { get; set; }
         public string? Division_Desc { get; set; }
-        [JsonIgnore]
-        public string? Active { get; set; }
-        public string? Reference_ID { get; set; }
-        [JsonIgnore]
-        public string? Level_Detail_GuID { get; set; }
-        [JsonIgnore]
-        public string? LevelGuID { get; set; }
-        public string? MOM_Integration { get; set; }
+        public bool? IsChild { get; set; }
+        public Guid? ParentDivisionGuid { get; set; }
+        public List<DepartmentBusinessDatatable?> DepartmentBusinessDatatable { get; set; }
     }
-    public class GetDivisionModel {
-
+    public class GetDivisionModel 
+    {
         [JsonIgnore]
         public Int64 CreatedBy { get; set; }
         public string? Division_Code { get; set; }
         public string? Division_Desc { get; set; }
-        public string? Active { get; set; }
-        public string? Reference_ID { get; set; }
-        
+        public bool? Active { get; set; }
         public DateTime? LastDateActive {  get; set; }
         [JsonIgnore]
         public string? TimeZoneID { get; set; }
         public string? DeptCodeDesc { get; set; }
-        public string? Function { get; set; }
-        public string? LevelGuid { get; set; }
-        public string? LevelDetailGuid { get; set; }
-        public string? IsMasterDivision { get; set; }
-        public string? MomIntegration { get; set; }
-        public string? DivisionGuid { get; set; }
+        public bool? IsChild { get; set; }
+        public long? ParentID { get; set; }
+        public Guid? DivisionGuid { get; set; }
         public string? CreatedName { get; set; }
         public string? ModifiedName { get; set; }
-
-   
     }
     public class UpdateDivision
     {
+        public DataTable DepartmentCatTable = new DataTable();
+
+        public DataTable ConvertToDataTable(List<DepartmentBusinessDatatable> dataList)
+        {
+            DepartmentCatTable.Columns.Add("DeptGuid", typeof(Guid));
+            DepartmentCatTable.Columns.Add("BusinessEntityGuid", typeof(Guid));
+            DepartmentCatTable.Columns.Add("CostCenterGuid", typeof(Guid));
+
+            foreach (var item in dataList)
+            {
+                foreach (var deptGuid in item.DeptGuidList)
+                {
+                    var row = DepartmentCatTable.NewRow();
+                    row["DeptGuid"] = deptGuid;
+                    row["BusinessEntityGuid"] = item.BusinessEntityGuid;
+                    row["CostCenterGuid"] = item.CostCenterGuid;
+                    DepartmentCatTable.Rows.Add(row);
+                }
+            }
+
+            return DepartmentCatTable;
+        }
+
+        public string? DivisionGuid { get; set; }
         [JsonIgnore]
         public long CreatedBy { get; set; }
         public string? Division_Code { get; set; }
         public string? Division_Desc { get; set; }
-        [JsonIgnore]
-        public string? Active { get; set; }
-        public string? Reference_ID { get; set; }
-        public string? DivisionGuid { get; set; }
-        [JsonIgnore]
-        public string? Level_Detail_GuID { get; set; }
-        [JsonIgnore]
-        public string? LevelGuID { get; set; }
-        public string? MOM_Integration { get; set; }
-        public List<UpdateDepartmentCategoryDatatable?> DepartmentCategoryDatatable { get; set; }
-        public List<UpdateShiftMapDivisionDatatable?> ShiftMapDivisionDatatable { get; set; }
+        public bool? Active { get; set; }
+        public bool? IsChild { get; set; }
+        public Guid? ParentDivisionGuid { get; set; }
+        public List<DepartmentBusinessDatatable?> DepartmentBusinessDatatable { get; set; }
     }
     public class DeleteDivisionResult {
         public long? SNo { get; set; }
@@ -123,71 +103,54 @@ namespace DataAccessLayer.Model
     }
     public class DeleteDivision
     {
-     public List<DeleteDivisionList>? DeleteDataTable { get; set; }
-        
+        public DataTable DeleteDivisionDataTable = new DataTable();
+        public DataTable ConvertToDataTable(List<DeleteDivisionList?> dataList)
+        {
+            DeleteDivisionDataTable.Columns.Add("Guid", typeof(Guid));
+            foreach (var item in dataList)
+            {
+                foreach (var deptGuid in item.DivisionGuidList)
+                {
+                    var row = DeleteDivisionDataTable.NewRow();
+                    row["Guid"] = deptGuid;
+
+                    DeleteDivisionDataTable.Rows.Add(row);
+                }
+            }
+
+            return DeleteDivisionDataTable ;
+        }
+
+        public List<DeleteDivisionList?> DeleteDataTable { get; set; }
         public class DeleteDivisionList
         {
             public string? DivisionGuid { get; set; }
+            public List<Guid> DivisionGuidList => DivisionGuid?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(g => g.Trim())
+        .Where(g => Guid.TryParse(g, out _))
+        .Select(Guid.Parse)
+        .ToList() ?? new List<Guid>();
         }
-    }
-
-    public class InsertDivisionList
-    {
-        public DivisionModel? InsertDivision { get; set; }
-        public List<DepartmentCategoryDatatable?> DepartmentCategoryDatatable { get; set; }
-        public List<ShiftMapDivisionDatatable?> ShiftMapDivisionDatatable { get; set; }
     }
     public class GetDivisionList
     {
         public GetDivisionModel DivisionModel { get; set; }
-        public List<GetDepartmentDatatable?> DepartmentDatatable { get; set; }
-        public List<GetCategoryDatatable?> CategoryDatatable { get; set; }
-        public List<GetShiftMapDivisionDatatable?> ShiftMapDivisionDatatable { get; set; }
+        public List<DropDownModel?> BusinessEntityDivMapDatatable { get; set; }
+        public List<DropDownModel?> CostCenterDivisionDatatable { get; set; }
+        public List<DropDownModel?> DepartmentDatatable { get; set; }
     }
-    
-
-    public class GetShiftMapDivisionDatatable
-    {
-        public string? ShiftGuid { get; set; }
-        public string? ShiftDesc { get; set; }
-    }
-    public class GetSelectedShiftMapDivisionDatatable
-    {
-        public string? ShiftGuid { get; set; }
-        public string? ShiftDesc { get; set; }
-    }
-
-    public class GetDepartmentDatatable
-    {
-        public string? DeptGuid { get; set; }
-        public string? DeptDesc { get; set; }
-        public string? selected { get; set; }
-    }
-    
-    public class GetCategoryDatatable 
-    {
-        public string? CategoryGuid { get; set; }
-        public string? CategoryDesc { get; set; }
-        public string? selected { get; set; }
-        public string? parentGuid { get; set; }
-        
-    }
-    public class DepartmentCategoryDatatable
+    public class DepartmentBusinessDatatable
     {
         public string? DeptGuid {  get; set; }
-        public string? CategoryGuid {  get; set; }
-    }
-    public class UpdateDepartmentCategoryDatatable
-    {
-        public string? DeptGuid { get; set; }
-        public string? CategoryGuid { get; set; }
-    }
-    public class ShiftMapDivisionDatatable
-    {
-        public string? ShiftGuid { get; set; }
-    }
-    public class UpdateShiftMapDivisionDatatable
-    {
-        public string? ShiftGuid { get; set; }
+        public Guid BusinessEntityGuid {  get; set; }
+        public Guid CostCenterGuid { get; set; }
+        public List<Guid> DeptGuidList => DeptGuid?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(g => g.Trim())
+        .Where(g => Guid.TryParse(g, out _))
+        .Select(Guid.Parse)
+        .ToList() ?? new List<Guid>();
+
     }
 }
