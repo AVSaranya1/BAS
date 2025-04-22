@@ -135,7 +135,7 @@ namespace WebApi.Controllers
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        
+
                         await _auditLogService.LogAction("", "getParentDivisionMap", "");
                         var objClientDivisionModel = await _repo.ClientDivisionDALRepo.getParentDivisionMap();
                         if (objClientDivisionModel != null)
@@ -159,7 +159,6 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-
         [HttpGet("getDivisionByDivisionGuid/{DivisionGuid}")]
         public async Task<IActionResult> getClientDivisionByDivisionGuid(string DivisionGuid)
         {
