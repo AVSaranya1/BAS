@@ -10,7 +10,7 @@ namespace DataAccessLayer.Interface
         Task<(bool deleteClientDivision, List<DeleteDivisionResult> deleteResults)> DeleteClientDivision(long Id, DeleteDivision deleteClientDivision);
         Task<(GetDivisionModel? getClientDivisionModel,  List<DropDownModel?> getBusinessEntityDatatables, List<DropDownModel?> getCostCenterDivisionDatatables, List<MultiSelectionDropDownModel?> getDepartmentDatatables)> GetClientDivisionByGUId(string GuId);
         Task<(List<DropDownModel>? getBusinessEntityDatatables, List<DropDownModel?> getCostCenterDivisionDatatables, List<DropDownModel?> getDepartmentDatatables)> GetClientDivisionDeptCatMap();
-        Task <List<DropDownModel>> getParentDivisionMap();
+        Task<List<DropDownModel>> getParentDivisionMap();
     }
     
 }
