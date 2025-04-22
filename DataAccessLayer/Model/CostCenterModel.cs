@@ -17,15 +17,18 @@ namespace DataAccessLayer.Model
 
             foreach (var item in dataList)
             {
-                foreach (var division in item.DivisionGuidList)
+                foreach (var business in item.BusinessEntityGuidList)
                 {
-                    foreach (var deptGuid in item.DeptGuidList)
+                    foreach (var division in item.DivisionGuidList)
                     {
-                        var row = CostCenterDeleteTable.NewRow();
-                        row["BusinessEntityGuid"] = item.BusinessEntityGuid;
-                        row["DivisionGuid"] = division;
-                        row["DeptGuid"] = deptGuid;
-                        CostCenterDeleteTable.Rows.Add(row);
+                        foreach (var deptGuid in item.DeptGuidList)
+                        {
+                            var row = CostCenterDeleteTable.NewRow();
+                            row["BusinessEntityGuid"] = business;
+                            row["DivisionGuid"] = division;
+                            row["DeptGuid"] = deptGuid;
+                            CostCenterDeleteTable.Rows.Add(row);
+                        }
                     }
                 }
             }
@@ -60,21 +63,25 @@ namespace DataAccessLayer.Model
 
             foreach (var item in dataList)
             {
-                foreach (var division in item.DivisionGuidList)
+                foreach (var business in item.BusinessEntityGuidList)
                 {
-                    foreach (var deptGuid in item.DeptGuidList)
+                    foreach (var division in item.DivisionGuidList)
                     {
-                        var row = CostCenterDeleteTable.NewRow();
-                        row["BusinessEntityGuid"] = item.BusinessEntityGuid;
-                        row["DivisionGuid"] = division;
-                        row["DeptGuid"] = deptGuid;
-                        CostCenterDeleteTable.Rows.Add(row);
+                        foreach (var deptGuid in item.DeptGuidList)
+                        {
+                            var row = CostCenterDeleteTable.NewRow();
+                            row["BusinessEntityGuid"] = business;
+                            row["DivisionGuid"] = division;
+                            row["DeptGuid"] = deptGuid;
+                            CostCenterDeleteTable.Rows.Add(row);
+                        }
                     }
                 }
             }
             return CostCenterDeleteTable;
         }
         public Guid GUID {  get; set; }
+        [JsonIgnore]
         public long ID { get; set; }
         [Required(ErrorMessage = Common.Messages.ErrCostCenterCode)]
         public string? CostCenterCode { get; set; }
@@ -143,10 +150,16 @@ namespace DataAccessLayer.Model
     }
     public class InsertandUpdateCostCenterModelList
     {
-        public Guid? BusinessEntityGuid { get; set; }
+        public string? BusinessEntityGuid { get; set; }
         public string? DivisionGuid { get; set; }
 
         public string? DeptGuid { get; set; }
+        public List<Guid> BusinessEntityGuidList => BusinessEntityGuid?
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(g => g.Trim())
+        .Where(g => Guid.TryParse(g, out _))
+        .Select(Guid.Parse)
+        .ToList() ?? new List<Guid>();
         public List<Guid> DivisionGuidList => DivisionGuid?
         .Split(',', StringSplitOptions.RemoveEmptyEntries)
         .Select(g => g.Trim())
@@ -163,8 +176,14 @@ namespace DataAccessLayer.Model
     public class GetSelectedCostCenterGuidList
     {
         public GetCostCenterModel CostCenterModel { get; set; }
-        public List<DropDownModel?> BusinessEntityDivMapDatatable { get; set; }
-        public List<MultiSelectionDropDownModel?> DivisionDatatable { get; set; }
-        public List<MultiSelectionDropDownModel?> DepartmentDatatable { get; set; }
+        public List<MultiSelectionDropDownModel?> BusinessEntityList { get; set; }
+        public List<MultiSelectionDropDownModel?> DivisionList { get; set; }
+        public List<MultiSelectionDropDownModel?> DepartmentList { get; set; }
+    }
+    public class GetCostCenterGuidList
+    {
+        public List<DropDownModel?> BusinessEntityList { get; set; }
+        public List<DropDownModel?> DivisionList { get; set; }
+        public List<DropDownModel?> DepartmentList { get; set; }
     }
 }
