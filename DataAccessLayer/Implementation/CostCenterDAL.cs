@@ -9,8 +9,10 @@ namespace DataAccessLayer.Implementation
 {
     public class CostCenterDAL : RepositoryBase, ICostCenterDAL
     {
-        public CostCenterDAL(IDbTransaction? _transaction) : base(_transaction)
+        private readonly string _connectionString;
+        public CostCenterDAL(IDbTransaction? _transaction, string connectionString) : base(_transaction)
         {
+            _connectionString = connectionString;
         }
 
         public async Task<string> AddCostCenterAsync(CostCenterModel model, DataTable dataTable)
@@ -35,10 +37,11 @@ namespace DataAccessLayer.Implementation
             return parameters.Get<string>("@ReturnValue");
         }
 
-        public async Task<string> DeleteCostCenterAsync(DataTable deleteLevelDetailTable)
+        public async Task<string> DeleteCostCenterAsync(DataTable deleteLevelDetailTable, string? ModifiedBy)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@dtDelete", deleteLevelDetailTable.AsTableValuedParameter("utt_Delete"));
+            parameters.Add("@dtDelete", deleteLevelDetailTable.AsTableValuedParameter("utt_DeleteByGuid"));
+            parameters.Add("@ModifiedBy",ModifiedBy);
             parameters.Add("@ReturnValue", dbType: DbType.String, size: 100, direction: ParameterDirection.Output);
             parameters.Add("@Mode", Common.PageMode.DELETE);
 
@@ -62,7 +65,7 @@ namespace DataAccessLayer.Implementation
                 commandType: CommandType.StoredProcedure);
         }
 
-        public async Task<(GetCostCenterModel getCostCenterModel, List<DropDownModel> getBusinessEntityTables,List<MultiSelectionDropDownModel>? getDivisionDatatables, List<MultiSelectionDropDownModel?> getDepartmentDatatables)> GetCostCenterByGuId(string GuId)
+        public async Task<(GetCostCenterModel getCostCenterModel, List<MultiSelectionDropDownModel> getBusinessEntityTables,List<MultiSelectionDropDownModel>? getDivisionDatatables, List<MultiSelectionDropDownModel?> getDepartmentDatatables)> GetCostCenterByGuId(string GuId)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Guid", Guid.Parse(GuId));
@@ -73,10 +76,26 @@ namespace DataAccessLayer.Implementation
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
             var result = multi.Read<GetCostCenterModel>().FirstOrDefault();
-            var businessEntityDatatables = (await multi.ReadAsync<DropDownModel>())?.ToList();
+            var businessEntityDatatables = (await multi.ReadAsync<MultiSelectionDropDownModel>())?.ToList();
             var Divisiontable = (await multi.ReadAsync<MultiSelectionDropDownModel>())?.ToList();
             var DeptTable = (await multi.ReadAsync<MultiSelectionDropDownModel>())?.ToList();
             return (result, businessEntityDatatables, Divisiontable,DeptTable);
+        }
+        public async Task<(List<DropDownModel?> getBusinessEntityTables, List<DropDownModel?> getDivisionDatatables, List<DropDownModel?> getDepartmentDatatables)> getMapBUDivisionDept()
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@Guid", null);
+            parameters.Add("@Mode", Common.PageMode.GET_DETAIL);
+
+            var multi = await Connection.QueryMultipleAsync("sp_CostCenter",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            
+            var businessEntityDatatables = (await multi.ReadAsync<DropDownModel?>()).ToList();
+            var Divisiontable = (await multi.ReadAsync<DropDownModel?>()).ToList();
+            var DeptTable = (await multi.ReadAsync<DropDownModel?>()).ToList();
+            return (businessEntityDatatables, Divisiontable, DeptTable);
         }
         public async Task<IEnumerable<DropDownModel>> getMapParentCostCenter()
         {
@@ -89,41 +108,6 @@ namespace DataAccessLayer.Implementation
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
         }
-        public async Task<IEnumerable<DropDownModel>> GetMapBusinessUnit()
-        {
-            DynamicParameters parameters = new DynamicParameters();
-            
-           parameters.Add("@Mode", Common.PageMode.GET_MAP_PARENT_BU);
-
-            return await Connection.QueryAsync<DropDownModel>("sp_CostCenter",
-                parameters,
-                transaction: Transaction,
-                commandType: CommandType.StoredProcedure);
-        }
-
-        public async Task<IEnumerable<DropDownModel>> GetMapDivisionCost()
-        {
-            DynamicParameters parameters = new DynamicParameters();
-
-            parameters.Add("@Mode", Common.PageMode.GET_MAP_DIVISION);
-
-            return await Connection.QueryAsync<DropDownModel>("sp_CostCenter",
-                parameters,
-                transaction: Transaction,
-                commandType: CommandType.StoredProcedure);
-        }
-        public async Task<IEnumerable<DropDownModel>> GetMapDepartment()
-        {
-            DynamicParameters parameters = new DynamicParameters();
-
-            parameters.Add("@Mode", Common.PageMode.GET_MAP_DEPARTMENT);
-
-            return await Connection.QueryAsync<DropDownModel>("sp_CostCenter",
-                parameters,
-                transaction: Transaction,
-                commandType: CommandType.StoredProcedure);
-        }
-
         public async Task<string> UpdateCostCenterAsync(UpdateCostCenterModel model, DataTable dataTable)
         {
             DynamicParameters parameters = new DynamicParameters();
