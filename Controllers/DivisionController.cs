@@ -119,6 +119,47 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+
+        [HttpGet("getParentDivisionMap")]
+        public async Task<IActionResult> getParentDivisionMap()
+        {
+            try
+            {
+                string strTimeZoneID = string.Empty;
+                if (HttpContext?.Session != null)
+                {
+                    strTimeZoneID = HttpContext.Session.GetString(Common.SessionVariables.TimeZoneID) ?? string.Empty;
+                }
+                using (IUowDivision _repo = new UowDivision(_httpContextAccessor))
+                {
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response))
+                    {
+                        
+                        await _auditLogService.LogAction("", "getParentDivisionMap", "");
+                        var objClientDivisionModel = await _repo.ClientDivisionDALRepo.getParentDivisionMap();
+                        if (objClientDivisionModel != null)
+                        {
+                            return Ok(objClientDivisionModel);
+                        }
+                        else
+                        {
+                            return BadRequest(Common.Messages.NoRecordsFound);
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(Common.Messages.Login);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
         [HttpGet("getDivisionByDivisionGuid/{DivisionGuid}")]
         public async Task<IActionResult> getClientDivisionByDivisionGuid(string DivisionGuid)
         {

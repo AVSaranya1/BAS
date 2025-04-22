@@ -118,6 +118,7 @@ namespace DataAccessLayer.Model
             public const string GET_MAP_PARENT_CostCenter= "GET_MAP_PARENT_CostCenter";
             public const string GET_USERTYPE="GET_USERTYPE";
             public const string GET_ORG_COUNTRY_DROPDOWN= "GET_ORG_COUNTRY_DROPDOWN";
+            public const string GET_MAP_PARENT_DIVISION= "GET_MAP_PARENT_DIVISION";
         }
         public class FileExtensions
         {

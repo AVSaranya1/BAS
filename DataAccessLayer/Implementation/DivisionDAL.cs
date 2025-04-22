@@ -89,6 +89,20 @@ namespace DataAccessLayer.Implementation
             return (BusinessEntityTable, CostCentertable, Departmenttable);
         }
 
+        public async Task<List<DropDownModel?> > getParentDivisionMap()
+        {
+            DynamicParameters parameters = new DynamicParameters();
+
+            parameters.Add("@Mode", Common.PageMode.GET_MAP_PARENT_DIVISION);
+            var multi = await Connection.QueryMultipleAsync("sp_Division",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            
+            return multi.Read<DropDownModel>().ToList(); 
+        }
+
+
         public async Task<(bool InsertClientDivision, long RetVal, string Msg)> InsertUpdateClientDivision(DivisionModel model)
         {
             DynamicParameters parameters = new DynamicParameters();

@@ -10,9 +10,7 @@ using System.Threading.Tasks;
 
 namespace DataAccessLayer.Model
 {
-
-
-    public class EntityGroupModel
+public class EntityGroupModel
     {
         [SwaggerSchema(ReadOnly=true)]
         public string? Mode { get; set; }
@@ -25,14 +23,10 @@ namespace DataAccessLayer.Model
         [Required(ErrorMessage = Common.Messages.ErrEntityGroupCode)]
         public string? EntityGroupCode { get; set; }
         public string? EntityGroupDesc { get; set; }
-<<<<<<< HEAD
-        public string? EntityGroupName { get; set; }
-        
-=======
         [Required(ErrorMessage = Common.Messages.ErrEntityGroupName)]
         public string? EntityGroupName { get; set; }
         [SwaggerSchema(ReadOnly = true)]
->>>>>>> b4be727e6a638b798fde3650e842643cbeb7d8f1
+
         public string? Logo { get; set; }
         public bool? IsChild { get; set; }
         public Guid? ParentEntityGroupGuid { get; set; }
