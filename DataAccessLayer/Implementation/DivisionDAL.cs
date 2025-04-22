@@ -11,9 +11,10 @@ namespace DataAccessLayer.Implementation
 {
     public class DivisionDAL : RepositoryBase, IDivisionDAL
     {
-        public DivisionDAL(IDbTransaction _transaction) : base(_transaction)
+        private readonly string _connectionString;
+        public DivisionDAL(IDbTransaction _transaction, string connectionString) : base(_transaction)
         {
-
+            _connectionString = connectionString;
         }
         public async Task<(bool deleteClientDivision, List<DeleteDivisionResult> deleteResults)> DeleteClientDivision(long id, DeleteDivision deleteClientDivision)
         {
@@ -88,8 +89,7 @@ namespace DataAccessLayer.Implementation
             var Departmenttable = (await multi.ReadAsync<DropDownModel>())?.ToList();
             return (BusinessEntityTable, CostCentertable, Departmenttable);
         }
-
-        public async Task<List<DropDownModel?> > getParentDivisionMap()
+        public async Task<List<DropDownModel?>> getParentDivisionMap()
         {
             DynamicParameters parameters = new DynamicParameters();
 
@@ -98,8 +98,8 @@ namespace DataAccessLayer.Implementation
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            
-            return multi.Read<DropDownModel>().ToList(); 
+
+            return multi.Read<DropDownModel>().ToList();
         }
 
 
