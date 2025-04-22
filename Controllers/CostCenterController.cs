@@ -79,9 +79,9 @@ namespace WebApi.Controllers
                             responseSelect = new GetSelectedCostCenterGuidList
                             {
                                 CostCenterModel = result.getCostCenterModel,
-                                BusinessEntityDivMapDatatable = result.getBusinessEntityTables,
-                                DivisionDatatable = result.getDivisionDatatables,
-                                DepartmentDatatable = result.getDepartmentDatatables
+                                BusinessEntityList = result.getBusinessEntityTables,
+                                DivisionList = result.getDivisionDatatables,
+                                DepartmentList = result.getDepartmentDatatables
                             };
                             return Ok(responseSelect);
                         }
@@ -139,8 +139,8 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getMapBusinessUnit")]
-        public async Task<IActionResult> GetMapBusinessUnit()
+        [HttpGet("getMapBUDivisionDept")]
+        public async Task<IActionResult> getMapBUDivisionDept()
         {
             try
             {
@@ -149,18 +149,17 @@ namespace WebApi.Controllers
                 {
                     using (IUowCostCenter _repo = new UowCostCenter(_httpContextAccessor))
                     {
-                        var lstData = await _repo.CostCenterDALRepo.GetMapBusinessUnit();
-                        if (lstData != null)
+                        var responseSelect = new GetCostCenterGuidList();
+                        var lstData = await _repo.CostCenterDALRepo.getMapBUDivisionDept();
+                        if (lstData.getBusinessEntityTables != null)
                         {
-                            switch (lstData.Count())
+                            responseSelect = new GetCostCenterGuidList
                             {
-                                case > 0:
-                                    return Ok(lstData);
-                                case 0:
-                                    return BadRequest(Common.Messages.NoRecordsFound);
-                                default:
-                                    return BadRequest();
-                            }
+                               BusinessEntityList = lstData.getBusinessEntityTables,
+                               DivisionList = lstData.getDivisionDatatables,
+                               DepartmentList = lstData.getDepartmentDatatables
+                            };
+                            return Ok(responseSelect);
                         }
                     }
                 }
@@ -176,80 +175,7 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getMapDivision")]
-        public async Task<IActionResult> getMapDivision()
-        {
-            try
-            {
-                string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                if (!string.IsNullOrEmpty(response))
-                {
-                    using (IUowCostCenter _repo = new UowCostCenter(_httpContextAccessor))
-                    {
-                        var lstData = await _repo.CostCenterDALRepo.GetMapDivisionCost();
-                        if (lstData != null)
-                        {
-                            switch (lstData.Count())
-                            {
-                                case > 0:
-                                    return Ok(lstData);
-                                case 0:
-                                    return BadRequest(Common.Messages.NoRecordsFound);
-                                default:
-                                    return BadRequest();
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    return BadRequest(Common.Messages.Login);
-                }
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
-        [HttpGet("getMapDepartment")]
-        public async Task<IActionResult> getMapDepartment()
-        {
-            try
-            {
-                string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                if (!string.IsNullOrEmpty(response))
-                {
-                    using (IUowCostCenter _repo = new UowCostCenter(_httpContextAccessor))
-                    {
-                        var lstData = await _repo.CostCenterDALRepo.GetMapDepartment();
-                        if (lstData != null)
-                        {
-                            switch (lstData.Count())
-                            {
-                                case > 0:
-                                    return Ok(lstData);
-                                case 0:
-                                    return BadRequest(Common.Messages.NoRecordsFound);
-                                default:
-                                    return BadRequest();
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    return BadRequest(Common.Messages.Login);
-                }
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
+        
         [HttpPost("addCostCenter")]
         public async Task<IActionResult> AddCostCenter(CostCenterModel objModel)
         {
@@ -356,7 +282,7 @@ namespace WebApi.Controllers
                     {
                         await _auditLogService.LogAction("", "DeleteCostCenter", "");
                         var dataTable = deleteLevelDetail.ConvertToDataTable(deleteLevelDetail.DeleteDataTable);
-                        var result = await _repo.CostCenterDALRepo.DeleteCostCenterAsync(dataTable);
+                        var result = await _repo.CostCenterDALRepo.DeleteCostCenterAsync(dataTable, response);
                         _repo.Commit();
                         if (string.IsNullOrEmpty(result))
                         {
