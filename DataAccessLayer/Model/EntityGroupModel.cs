@@ -25,7 +25,10 @@ namespace DataAccessLayer.Model
         [Required(ErrorMessage = Common.Messages.ErrEntityGroupCode)]
         public string? EntityGroupCode { get; set; }
         public string? EntityGroupDesc { get; set; }
-
+<<<<<<< HEAD
+        public string? EntityGroupName { get; set; }
+        
+=======
         [Required(ErrorMessage = Common.Messages.ErrEntityGroupName)]
         public string? EntityGroupName { get; set; }
         [SwaggerSchema(ReadOnly = true)]
