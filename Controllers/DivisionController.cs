@@ -311,7 +311,7 @@ namespace WebApi.Controllers
                         await _auditLogService.LogAction("", "deleteDivision", "");
                         foreach (var UserGuid in deleteClientDivision.DeleteDataTable)
                         {
-                            var GuidResp = await _guid.GetGUIDBasedOnClientDivision(UserGuid.DivisionGuid);
+                            var GuidResp = await _guid.GetGUIDBasedOnClientDivision(UserGuid.DivisionGuid.ToString());
                             if (!String.Equals(GuidResp.ToString(),UserGuid.DivisionGuid.ToString(),StringComparison.OrdinalIgnoreCase))
                             {
                                 return BadRequest("Please Check Division GUID");
