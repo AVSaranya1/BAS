@@ -99,38 +99,27 @@ namespace DataAccessLayer.Model
         public long? SNo { get; set; }
         public string? Result { get; set; }
         public string? Remarks { get; set; }
-        public string? DivisionName { get; set; }
+        public string? DivisionCode { get; set; }
     }
     public class DeleteDivision
     {
         public DataTable DeleteDivisionDataTable = new DataTable();
         public DataTable ConvertToDataTable(List<DeleteDivisionList?> dataList)
         {
-            DeleteDivisionDataTable.Columns.Add("Guid", typeof(Guid));
+            DeleteDivisionDataTable.Columns.Add("GUID", typeof(Guid));
             foreach (var item in dataList)
             {
-                foreach (var divGuid in item.DivisionGuidList)
-                {
-                    var row = DeleteDivisionDataTable.NewRow();
-                    row["Guid"] = divGuid;
-
-                    DeleteDivisionDataTable.Rows.Add(row);
-                }
+                var row = DeleteDivisionDataTable.NewRow();
+                row["Guid"] = item.DivisionGuid;
+                DeleteDivisionDataTable.Rows.Add(row);
             }
-
-            return DeleteDivisionDataTable ;
+                return DeleteDivisionDataTable ;
         }
 
         public List<DeleteDivisionList?> DeleteDataTable { get; set; }
         public class DeleteDivisionList
         {
-            public string? DivisionGuid { get; set; }
-            public List<Guid> DivisionGuidList => DivisionGuid?
-        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-        .Select(g => g.Trim())
-        .Where(g => Guid.TryParse(g, out _))
-        .Select(Guid.Parse)
-        .ToList() ?? new List<Guid>();
+            public Guid? DivisionGuid { get; set; }
         }
     }
     public class GetDivisionList
