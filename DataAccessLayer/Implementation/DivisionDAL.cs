@@ -18,10 +18,10 @@ namespace DataAccessLayer.Implementation
         public async Task<(bool deleteClientDivision, List<DeleteDivisionResult> deleteResults)> DeleteClientDivision(long id, DeleteDivision deleteClientDivision)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@tblDivision", deleteClientDivision.DeleteDivisionDataTable.AsTableValuedParameter("utt_DeleteByGuid"));
+            parameters.Add("@tblDivision", deleteClientDivision.DeleteDivisionDataTable.AsTableValuedParameter("utt_DeleteByGUID"));
             parameters.Add("@UpdatedBy", id);
             parameters.Add("@Mode", Common.PageMode.DELETE);
-            var Result = await Connection.QueryMultipleAsync("sp_Division",
+            var Result = await Connection.QueryMultipleAsync("sp_DeleteDivision",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
