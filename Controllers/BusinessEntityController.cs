@@ -7,13 +7,16 @@ using DataAccessLayer.Uow.Interface;
 using System;
 using DataAccessLayer.Model.BusinessEntity;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApi.Controllers;
 
+[Authorize]
 [Route("api/{region?}/[controller]")]
 [ApiController]
 public class BusinessEntityController : ApiBaseController
 {
+    private readonly IUnitOfWork _repo;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAuditLogService _auditLogService;
     private SessionService _sessionService;
@@ -29,7 +32,8 @@ public class BusinessEntityController : ApiBaseController
         IHttpContextAccessor httpContextAccessor,
         SessionService sessionService,
         IAuditLogService auditLogService,
-        UploadFileServices uploadfile
+        UploadFileServices uploadfile,
+        IUnitOfWork repo
         ) : base(configuration)
     {
         _logger = logger;
@@ -37,8 +41,10 @@ public class BusinessEntityController : ApiBaseController
         _auditLogService = auditLogService;
         _sessionService = sessionService;
         _uploadfile = uploadfile;
+        _repo = repo;
         _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], _FolderName = Common.FileFolder.Logo) ?? Common.FileFolder.img;
         _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], _FolderName = Common.FileFolder.Logo) ?? Common.FileFolder.img;
+        _repo.SwitchDatabase(DatabaseType.Organization);
     }
 
     [HttpGet("getBusinessEntity")]
@@ -49,9 +55,7 @@ public class BusinessEntityController : ApiBaseController
             string response = _sessionService.GetSession(Common.SessionVariables.Guid);
             if (!string.IsNullOrEmpty(response))
             {
-                using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-                {
-                    var lstData = await _repo.EntityDALRepo.GetAllBusinessEntity();
+                    var lstData = await _repo.BusinessEntityDALRepo.GetAllBusinessEntity();
                     if (lstData != null)
                     {
                         switch (lstData.Count())
@@ -68,7 +72,6 @@ public class BusinessEntityController : ApiBaseController
                                 return BadRequest();
                         }
                     }
-                }
             }
             else
             {
@@ -91,9 +94,7 @@ public class BusinessEntityController : ApiBaseController
             string response = _sessionService.GetSession(Common.SessionVariables.Guid);
             if (!string.IsNullOrEmpty(response))
             {
-                using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-                {
-                    var result = await _repo.EntityDALRepo.GetBusinessEntityByGuiD(guid);
+                    var result = await _repo.BusinessEntityDALRepo.GetBusinessEntityByGuiD(guid);
                     if (result != null)
                     {
                         result.LogoPath = _uploadfile.GetFile(result.Logo, _virtualPath);
@@ -103,7 +104,6 @@ public class BusinessEntityController : ApiBaseController
                     {
                         return BadRequest(Common.Messages.NoRecordsFound);
                     }
-                }
             }
             else
             {
@@ -131,9 +131,8 @@ public class BusinessEntityController : ApiBaseController
                 string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                 if (!string.IsNullOrEmpty(response))
                 {
-                    using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-                    {
-                        await _auditLogService.LogAction("", "AddBusinessEntity", "");
+                        await _auditLogService.LogAction("AddBusinessEntity");
+
                         string? FileName = objModel.LogoFile?.FileName.Trim() ?? string.Empty;
                         string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, objModel.LogoFile, _physicalPath);
 
@@ -146,8 +145,10 @@ public class BusinessEntityController : ApiBaseController
                             objModel.Logo = ImageUpdated;
                         }
 
-                        var result = await _repo.EntityDALRepo.AddBusinessEntityAsync(objModel);
-                        _repo.Commit();
+                        _repo.BeginTransaction();
+                        var result = await _repo.BusinessEntityDALRepo.AddBusinessEntityAsync(objModel);
+                        await _repo.CompleteAsync();
+
                         if (string.IsNullOrEmpty(result))
                         {
                             _logger.LogError(Environment.NewLine);
@@ -159,7 +160,6 @@ public class BusinessEntityController : ApiBaseController
                             return Ok(result);
                         }
                     }
-                }
                 else
                 {
                     return BadRequest(Common.Messages.Login);
@@ -184,12 +184,11 @@ public class BusinessEntityController : ApiBaseController
         {
             try
             {
-                using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-                {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        await _auditLogService.LogAction("", "UpdateBusinessEntity", "");
+                        await _auditLogService.LogAction("UpdateBusinessEntity");
+
                         string? FileName = objModel.LogoFile?.FileName.Trim() ?? string.Empty;
                         
                         string ImageUpdated = await _uploadfile.InsertandUpdateFileName(FileName, objModel.LogoFile, _physicalPath);
@@ -197,10 +196,12 @@ public class BusinessEntityController : ApiBaseController
                         if (!string.IsNullOrEmpty(ImageUpdated))
                         {
                             objModel.Logo = ImageUpdated;
-                        }                        
+                        }
 
-                            var result = await _repo.EntityDALRepo.UpdateBusinessEntityAsync(objModel);
-                        _repo.Commit();
+                        _repo.BeginTransaction();
+                        var result = await _repo.BusinessEntityDALRepo.UpdateBusinessEntityAsync(objModel);
+                        await _repo.CompleteAsync();
+
                         if (string.IsNullOrEmpty(result))
                         {
                             _logger.LogError(Environment.NewLine);
@@ -216,7 +217,6 @@ public class BusinessEntityController : ApiBaseController
                     {
                         return BadRequest(Common.Messages.Login);
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -231,17 +231,19 @@ public class BusinessEntityController : ApiBaseController
     {
         try
         {
-            using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-            {
                 string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                 long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                 string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                 if (!string.IsNullOrEmpty(response))
                 {
-                    await _auditLogService.LogAction("", "DeleteBusinessEntity", "");
+                    await _auditLogService.LogAction("DeleteBusinessEntity");
+
                     var dataTable = deleteBusinessEntity.ConvertToDataTable(deleteBusinessEntity.DeleteDataTable);
-                    var result = await _repo.EntityDALRepo.DeleteBusinessEntityAsync(dataTable);
-                    _repo.Commit();
+
+                    _repo.BeginTransaction();
+                    var result = await _repo.BusinessEntityDALRepo.DeleteBusinessEntityAsync(dataTable);
+                    await _repo.CompleteAsync();
+
                     if (string.IsNullOrEmpty(result))
                     {
                         _logger.LogError(Environment.NewLine);
@@ -257,7 +259,6 @@ public class BusinessEntityController : ApiBaseController
                 {
                     return BadRequest(Common.Messages.Login);
                 }
-            }
         }
         catch (Exception ex)
         {
@@ -274,9 +275,7 @@ public class BusinessEntityController : ApiBaseController
             string response = _sessionService.GetSession(Common.SessionVariables.Guid);
             if (!string.IsNullOrEmpty(response))
             {
-                using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-                {
-                    var lstData = await _repo.EntityDALRepo.GetMapParentBusinessUnit();
+                    var lstData = await _repo.BusinessEntityDALRepo.GetMapParentBusinessUnit();
                     if (lstData != null)
                     {
                         switch (lstData.Count())
@@ -289,7 +288,6 @@ public class BusinessEntityController : ApiBaseController
                                 return BadRequest();
                         }
                     }
-                }
             }
             else
             {
@@ -312,9 +310,7 @@ public class BusinessEntityController : ApiBaseController
             string response = _sessionService.GetSession(Common.SessionVariables.Guid);
             if (!string.IsNullOrEmpty(response))
             {
-                using (IUowEntity _repo = new UowEntity(_httpContextAccessor))
-                {
-                    var lstData = await _repo.EntityDALRepo.GetMapEntityGroup();
+                    var lstData = await _repo.BusinessEntityDALRepo.GetMapEntityGroup();
                     if (lstData != null)
                     {
                         switch (lstData.Count())
@@ -327,7 +323,6 @@ public class BusinessEntityController : ApiBaseController
                                 return BadRequest();
                         }
                     }
-                }
             }
             else
             {

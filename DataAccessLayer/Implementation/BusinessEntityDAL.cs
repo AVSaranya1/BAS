@@ -6,9 +6,9 @@ using System.Data;
 
 namespace DataAccessLayer.Implementation;
 
-public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
+public class BusinessEntityDAL : BaseRepository, IBusinessEntityDAL
 {
-    public BusinessEntityDAL(IDbTransaction _transaction) : base(_transaction)
+    public BusinessEntityDAL(IDbConnection connection, IDbTransaction transaction) : base(connection, transaction)
     { }
 
     public async Task<IEnumerable<BusinessEntityModel>> GetAllBusinessEntity()
@@ -19,7 +19,6 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
 
         return await Connection.QueryAsync<BusinessEntityModel>("sp_BusinessEntity",
             parameters,
-            transaction: Transaction,
             commandType: CommandType.StoredProcedure);
     }
     public async Task<BusinessEntityModel> GetBusinessEntityByGuiD(Guid guid)
@@ -31,7 +30,6 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
         
         var result = await Connection.QueryFirstOrDefaultAsync<BusinessEntityModel>("sp_BusinessEntity",
             parameters,
-            transaction: Transaction,
             commandType: CommandType.StoredProcedure);
         return result;
     }
@@ -148,7 +146,6 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
 
         return await Connection.QueryAsync<DropDownModel>("sp_BusinessEntity",
             parameters,
-            transaction: Transaction,
             commandType: CommandType.StoredProcedure);
     }
     public async Task<IEnumerable<DropDownModel>> GetMapEntityGroup()
@@ -159,7 +156,6 @@ public class BusinessEntityDAL : RepositoryBase, IBusinessEntityDAL
 
         return await Connection.QueryAsync<DropDownModel>("sp_BusinessEntity",
             parameters,
-            transaction: Transaction,
             commandType: CommandType.StoredProcedure);
     }
 }

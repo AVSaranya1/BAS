@@ -401,7 +401,7 @@ namespace WebApi.Controllers
                         GetUserData(users, "GET");
                         vGuid = loginDetail?.Guid;
                     }
-                    var token = _jwtService.GenerateToken(loginModel?.UserName ?? "", Convert.ToString(vGuid) ?? "", loginModel?.Password ?? "");
+                    var token = _jwtService.GenerateToken(loginModel?.UserName ?? "", Convert.ToString(vGuid) ?? "", Guid);
 
                     return Ok(token);
                 }

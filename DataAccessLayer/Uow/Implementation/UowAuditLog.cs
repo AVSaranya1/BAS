@@ -8,8 +8,8 @@ using DataAccessLayer.Implementation;
 using DataAccessLayer.Uow.Interface;
 using DataAccessLayer.Services;
 using System.Data;
-using System.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
 
 
 namespace DataAccessLayer.Uow.Implementation
@@ -29,7 +29,7 @@ namespace DataAccessLayer.Uow.Implementation
             _connection.Open();
             _transaction = _connection.BeginTransaction();
 
-            _auditLogDAL = new AuditLogDAL(_transaction, connectionString);
+            _auditLogDAL = new AuditLogDAL(_connection, _transaction);
         }
 
         public IAuditLogDAL AuditLogDALRepo => _auditLogDAL;

@@ -13,16 +13,10 @@ using System.Transactions;
 
 namespace DataAccessLayer.Implementation
 {
-    public class AuditLogDAL : IAuditLogDAL
+    public class AuditLogDAL : BaseRepository, IAuditLogDAL
     {
-        private readonly IDbTransaction _transaction;
-        private readonly IDbConnection _connection;
-
-        public AuditLogDAL(IDbTransaction transaction, string connectionString)
-        {
-            _transaction = transaction;
-            _connection = transaction.Connection ?? throw new ArgumentNullException(nameof(transaction.Connection));
-        }
+        public AuditLogDAL(IDbConnection connection, IDbTransaction transaction) : base(connection, transaction)
+        { }
 
         public async Task<bool> LogAudit(AuditLog auditLog)
         {
@@ -39,13 +33,10 @@ namespace DataAccessLayer.Implementation
                 parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
                 parameters.Add("@ErrorMessage", dbType: DbType.String, size: 4000, direction: ParameterDirection.Output);
 
-                if (_connection == null)
-                    throw new ArgumentNullException(nameof(_connection), "Database connection cannot be null.");
-
-                await _connection.ExecuteAsync(
+                await Connection.ExecuteAsync(
                     "sp_LogAudit",
                     parameters,
-                    transaction: _transaction,
+                    transaction: Transaction,
                     commandType: CommandType.StoredProcedure
                 );
 
@@ -54,19 +45,16 @@ namespace DataAccessLayer.Implementation
 
                 if (result > 0)
                 {
-                    _transaction.Commit(); // Commit the transaction
                     return true;
                 }
                 else
                 {
-                    _transaction.Rollback(); // Rollback on failure
                     Console.WriteLine($"Audit Log Error: {errorMessage}");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _transaction.Rollback();
                 Console.WriteLine($"Exception: {ex.Message}");
                 return false;
             }

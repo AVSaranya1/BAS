@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using WebApi.Middleware;
 using Microsoft.Extensions.FileProviders;
+using DataAccessLayer.Implementation;
+using DataAccessLayer.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,13 +40,14 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor(); // Required for accessing session in services
+builder.Services.AddScoped<IDbConnectionProvider, DbConnectionProvider>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Bind the connection string from configuration
 string connectionString = builder.Configuration.GetConnectionString("connection") ??
     throw new InvalidOperationException("Database connection string is missing."); ;
 
 builder.Services.AddScoped<IUowEntityMenu, UowEntityMenu>();
-builder.Services.AddScoped<IUowEntityGroup, UowEntityGroup>();
 // Register your other services (UoWs, EmailServices, etc.)
 builder.Services.AddScoped<IUowOrganisation>(sp => new UowOrganisation(connectionString));
 builder.Services.AddScoped<IUowEmailTemplate>(sp => new UowEmailTemplate(connectionString));
@@ -56,14 +59,13 @@ builder.Services.AddScoped<UploadFileServices>();
 builder.Services.AddScoped<EncryptedDecrypt>();
 // Register MailServer with DI
 builder.Services.AddScoped<MailServer>(sp => new MailServer(connectionString));
-builder.Services.AddScoped<IUowDropdown>(sp => new UowDropdown(connectionString));
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 // Swagger Auth Start
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "BAS API", Version = "v1" });
 
     // Add JWT token support
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -95,7 +97,7 @@ builder.Services.AddSwaggerGen(c =>
 // JWT Authentication setup
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var jwtKey = jwtSettings["Key"];  // Retrieves the Key value
-var keyBytes = Encoding.ASCII.GetBytes(jwtKey?.ToString() ?? "");
+var keyBytes = Encoding.UTF8.GetBytes(jwtKey?.ToString() ?? "");
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -144,7 +146,7 @@ builder.Services.AddScoped<IUowDepartment, UowDepartment>();
 //AuditLog start
 builder.Services.AddScoped<IUowAuditLog, UowAuditLog>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAuditLogMasterService, AuditLogMasterService>();
 //AuditLog End
 builder.Services.AddScoped<IUowMenu>(sp => new UowMenu(connectionString));
 
@@ -231,6 +233,7 @@ app.UseRouting();
 
 app.UseAuthentication(); // JWT Authentication
 app.UseAuthorization();
+app.UseMiddleware<OrgDbContextMiddleware>();
 app.MapControllers();
 app.UseEndpoints(endpoints =>
 {

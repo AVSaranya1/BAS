@@ -2,6 +2,7 @@
 using DataAccessLayer.Model;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
@@ -10,12 +11,13 @@ using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
+    [Authorize]
     [Route("api/{region}/[controller]")]
     [ApiController]
     public class EntityGroupController : ApiBaseController
     {
 
-        private readonly IUowEntityGroup? _repository;
+        private readonly IUnitOfWork _repository;
         private readonly ILogger<EntityGroupController>? _logger;
         private readonly IAuditLogService? _auditLogService;
         string token = string.Empty;
@@ -26,7 +28,7 @@ namespace WebApi.Controllers
         private readonly string _virtualPath;
         private string _FolderName;
 
-        public EntityGroupController(IUowEntityGroup? repository, IConfiguration configuration, ILogger<EntityGroupController>? logger, IAuditLogService auditLogService, UploadFileServices uploadFileServices,IWebHostEnvironment webHostEnvironment) : base(configuration)
+        public EntityGroupController(IUnitOfWork repository, IConfiguration configuration, ILogger<EntityGroupController>? logger, IAuditLogService auditLogService, UploadFileServices uploadFileServices,IWebHostEnvironment webHostEnvironment) : base(configuration)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger;
@@ -35,6 +37,7 @@ namespace WebApi.Controllers
             _physicalPath = Path.Combine(configuration["FileUpload:PhysicalFilePath"], _FolderName = Common.FileFolder.EntityGroup) ?? Common.FileFolder.img;
             _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], _FolderName = Common.FileFolder.EntityGroup) ?? Common.FileFolder.img;
             _uploadfile = uploadFileServices;
+            _repository.SwitchDatabase(DatabaseType.Organization);
         }
 
 
@@ -51,8 +54,10 @@ namespace WebApi.Controllers
                     Mode = Common.PageMode.GET,
                 };
 
-                var lsOrganisation = await _repository.entityGroupRepo.GetEntityGroup(entityGroupModel);
-                await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
+                await _auditLogService.LogAction("GetOrganisationLevelInfo");
+                
+                var lsOrganisation = await _repository.EntityGroupDALRepo.GetEntityGroup(entityGroupModel);
+               
                 string filePath = string.Empty;
 
                 foreach (var org in lsOrganisation)
@@ -88,8 +93,10 @@ namespace WebApi.Controllers
                     Guid = Guid
                 };
 
-                var lsOrganisation = await _repository.entityGroupRepo.GetEntityGroupDetails(entityGroupModel);
-                await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
+                await _auditLogService.LogAction("GetEntityGroupDetails");
+                
+                var lsOrganisation = await _repository.EntityGroupDALRepo.GetEntityGroupDetails(entityGroupModel);
+                
                 string filePath = string.Empty;
 
                 foreach (var org in lsOrganisation)
@@ -117,9 +124,8 @@ namespace WebApi.Controllers
             {
                 string userGuid = HttpContext?.Session?.GetString(Common.SessionVariables.Guid);
                 if (!string.IsNullOrEmpty(userGuid))
-                {
-
-                    var lstData = await _repository.entityGroupRepo.GetMapEntityGroup();
+                {                    
+                    var lstData = await _repository.EntityGroupDALRepo.GetMapEntityGroup();
                     if (lstData != null)
                     {
                         switch (lstData.Count())
@@ -146,6 +152,7 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+
         [HttpPost("AddEntityGroup")]
         public async Task<IActionResult> AddEntityGroup([FromForm] EntityGroupModel objModel, IFormFile? strLogo) //string? parentEntityGuid)
         {
@@ -175,11 +182,12 @@ namespace WebApi.Controllers
                     Logo = ImageUpdated
                 };
 
-                // Call repository method
-                var lstEntity = await _repository.entityGroupRepo.AddEntityGroup(entityGroupModel);
+                await _auditLogService.LogAction("AddEntityGroup");
 
-               
-                await _auditLogService.LogAction(userGuid, "GetOrganisationLevelInfo", token);
+                // Call repository method                
+                _repository.BeginTransaction();
+                    var lstEntity = await _repository.EntityGroupDALRepo.AddEntityGroup(entityGroupModel);                    
+                await _repository.CompleteAsync();
 
                 // Check if the result is valid
                 if (lstEntity != null && lstEntity.Any())
@@ -240,9 +248,12 @@ namespace WebApi.Controllers
                     Logo = ImageUpdated
                 };
 
-                // Call repository method
-                var lstEntity = await _repository.entityGroupRepo.EditEntityGroup(entityGroupModel);
-                await _auditLogService.LogAction(userGuid, "EditEntityGroup", token);
+                await _auditLogService.LogAction("EditEntityGroup");
+
+                // Call repository method                
+                _repository.BeginTransaction();
+                    var lstEntity = await _repository.EntityGroupDALRepo.EditEntityGroup(entityGroupModel);
+                await _repository.CompleteAsync();
 
                 // Check if the result is valid
                 if (lstEntity != null && lstEntity.Any())
@@ -278,8 +289,11 @@ namespace WebApi.Controllers
                 string strUserGuid = HttpContext?.Session?.GetString(Common.SessionVariables.Guid) ?? string.Empty;
                 string strMode = "DELETE";
 
-                List<DeleteResultModel> lstDelete = await _repository.entityGroupRepo.DeleteEntityGroup(lstEntityGroupDel, strMode, strUserGuid);
-                await _auditLogService.LogAction(strUserGuid, "DeleteEntityGroup", string.Empty);
+                await _auditLogService.LogAction("DeleteEntityGroup");
+                
+                _repository.BeginTransaction();
+                    List<DeleteResultModel> lstDelete = await _repository.EntityGroupDALRepo.DeleteEntityGroup(lstEntityGroupDel, strMode, strUserGuid);                    
+                await _repository.CompleteAsync();
 
                 return lstDelete switch
                 {

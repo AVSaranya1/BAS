@@ -18,7 +18,7 @@ namespace DataAccessLayer.Model
 
     public static class Common
     {
-        
+
         public class SessionVariables()
         {
             public const string DBName = "DBName";
@@ -84,59 +84,70 @@ namespace DataAccessLayer.Model
             public const string ADD = "ADD";
             public const string DELETE = "DELETE";
             public const string GET = "GET";
-            public const string VIEW ="VIEW";
+            public const string VIEW = "VIEW";
             public const string USER_GROUP = "USER_GROUP";
             public const string GET_MASTER_LANGUAGE = "GET_MASTER_LANGUAGE";
-            public const string USER_ROLE= "USER_ROLE";
-            public const string GET_DETAIL= "GET_DETAIL";
-            public const string GET_ORG= "GET_ORG";
-            public const string GET_TIMEZONE= "GET_TIMEZONE";
-            public const string DELETE_ROLE= "DELETE_ROLE";
-            public const string UNLOCK= "UNLOCK";
-            public const string ADD_ROLE= "ADD_ROLE";
-            public const string UPDATE_USER_PASSWORD= "UPDATE_USER_PASSWORD";
-            public const string RESET_PWD_MASTER= "RESET_PWD_MASTER";
-            public const string ADD_CLIENT_TO_MASTER= "ADD_CLIENT_TO_MASTER";
+            public const string USER_ROLE = "USER_ROLE";
+            public const string GET_DETAIL = "GET_DETAIL";
+            public const string GET_ORG = "GET_ORG";
+            public const string GET_TIMEZONE = "GET_TIMEZONE";
+            public const string DELETE_ROLE = "DELETE_ROLE";
+            public const string UNLOCK = "UNLOCK";
+            public const string ADD_ROLE = "ADD_ROLE";
+            public const string UPDATE_USER_PASSWORD = "UPDATE_USER_PASSWORD";
+            public const string RESET_PWD_MASTER = "RESET_PWD_MASTER";
+            public const string ADD_CLIENT_TO_MASTER = "ADD_CLIENT_TO_MASTER";
             public const string GET_USER_ID = "GET_USER_ID";
             public const string EDIT_VALIDATE_USER = "EDIT_VALIDATE_USER";
-            public const string GET_DATALOCATION_DROPDOWN= "GET_DATALOCATION_DROPDOWN";
+            public const string GET_DATALOCATION_DROPDOWN = "GET_DATALOCATION_DROPDOWN";
             public const string GET_INDUSTRY_DROPDOWN = "GET_INDUSTRY_DROPDOWN";
-            public const string GET_MODULE_INFORMATION= "GET_MODULE_INFORMATION";
-            public const string GET_ORGMODULES= "GET_ORGMODULES";
+            public const string GET_MODULE_INFORMATION = "GET_MODULE_INFORMATION";
+            public const string GET_ORGMODULES = "GET_ORGMODULES";
             public const string MODULES = "MODULES";
-            public const string GET_PARENT= "GET_PARENT";
+            public const string GET_PARENT = "GET_PARENT";
             public const string GET_CLIENT_DETAIL = "GET_CLIENT_DETAIL";
             public const string CHECK_ModuleType = "CHECK_ModuleType";
             public const string CHECKUSEREXISTS = "CHECKUSEREXISTS";
-            public const string VALIDATE_TOKEN= "VALIDATE_TOKEN";
-            public const string GET_ORG_INDUSTRY_DROPDOWN= "GET_ORG_INDUSTRY_DROPDOWN";
-            public const string VIEW_CLIENT_DETAIL="VIEW_CLIENT_DETAIL";
-            public const string GET_MAP_CostCenter= "GET_MAP_CostCenter";
-            public const string GET_MAP_PARENT_BU= "GET_MAP_PARENT_BU";
+            public const string VALIDATE_TOKEN = "VALIDATE_TOKEN";
+            public const string GET_ORG_INDUSTRY_DROPDOWN = "GET_ORG_INDUSTRY_DROPDOWN";
+            public const string VIEW_CLIENT_DETAIL = "VIEW_CLIENT_DETAIL";
+            public const string GET_MAP_CostCenter = "GET_MAP_CostCenter";
+            public const string GET_MAP_PARENT_BU = "GET_MAP_PARENT_BU";
             public const string GET_MAP_DIVISION = "GET_MAP_DIVISION";
             public const string GET_MAP_DEPARTMENT = "GET_MAP_DEPARTMENT";
-            public const string GET_MAP_PARENT_CostCenter= "GET_MAP_PARENT_CostCenter";
-            public const string GET_USERTYPE="GET_USERTYPE";
-            public const string GET_ORG_COUNTRY_DROPDOWN= "GET_ORG_COUNTRY_DROPDOWN";
+            public const string GET_MAP_PARENT_COSTCENTER = "GET_MAP_PARENT_COSTCENTER";
+            public const string GET_MAP_ENTITY_GROUP = "GET_MAP_ENTITY_GROUP";
+            public const string GET_USERTYPE = "GET_USERTYPE";
+            public const string GET_ORG_COUNTRY_DROPDOWN = "GET_ORG_COUNTRY_DROPDOWN";
+        }
+        public class DropdownListType
+        {
+            public const string PARENT_ENTITY = "PARENT_ENTITY";
+            public const string GET_INDUSTRY_DROPDOWN = "GET_INDUSTRY_DROPDOWN";
+            public const string CURRENCY = "CURRENCY";
+            public const string COUNTRY = "COUNTRY";
+            public const string TIMEZONE = "TIMEZONE";
+            public const string MARITAL = "MARITAL";
+
         }
         public class FileExtensions
         {
             public static readonly string[] FileNameExtension = { ".jpg", ".jpeg", ".png" };
-        }   
+        }
         public class FileName
         {
             public static readonly string noPhoto = "nophoto.png";
         }
         public class FileFolder
         {
-            public static readonly string? UserImage = "UserImage";            
-            public static readonly string Org="Org";
+            public static readonly string? UserImage = "UserImage";
+            public static readonly string Org = "Org";
             public static readonly string Logo = "Logo";
-            public static readonly string img="/img";
-            public static readonly string EntityGroup= "EntityGroup";
+            public static readonly string img = "/img";
+            public static readonly string EntityGroup = "EntityGroup";
         }
     }
-    
+
     public static class TableVariables
     {
         public class Organisation
@@ -152,7 +163,7 @@ namespace DataAccessLayer.Model
 
     public static class Messages
     {
-       
+
         public const string MSG_ADD_FAIL = "Failed to add Entity Group";
         public const string MSG_REC_EXISTS_CODE = "Record already exists! Please verify the code.";
         public const string MSG_NO_RECORD = "No Record(s) Found!";
@@ -166,4 +177,5 @@ namespace DataAccessLayer.Model
         public const string MSG_REC_EXISTS = "Record already exists!<br />Change the value(s) and save the record or click on Cancel to return to listing.";
 
     }
+
 }

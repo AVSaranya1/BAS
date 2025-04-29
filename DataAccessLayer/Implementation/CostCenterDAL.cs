@@ -101,7 +101,7 @@ namespace DataAccessLayer.Implementation
         {
             DynamicParameters parameters = new DynamicParameters();
             
-            parameters.Add("@Mode", Common.PageMode.GET_MAP_PARENT_CostCenter);
+            parameters.Add("@Mode", Common.PageMode.GET_MAP_PARENT_COSTCENTER);
 
             return await Connection.QueryAsync<DropDownModel>("sp_CostCenter",
                 parameters,

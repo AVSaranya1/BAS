@@ -12,23 +12,15 @@ using System.Threading.Tasks;
 
 namespace DataAccessLayer.Implementation
 {
-    public class EntityGroupDAL : RepositoryBase, IEntityGroupDAL
+    public class EntityGroupDAL : BaseRepository, IEntityGroupDAL
     {
-        private readonly string _connectionString;
-
-        public EntityGroupDAL(IDbTransaction transaction, string connectionString) : base(transaction)
-        {
-            _connectionString = connectionString;
-        }
+        public EntityGroupDAL(IDbConnection connection, IDbTransaction transaction) : base(connection, transaction)
+        {}
 
         public async Task<string> AddEntityGroup(EntityGroupModel entityGroupModel)
         {
             try
             {
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    await connection.OpenAsync();
-
                     var parameters = new DynamicParameters();
                   
                     parameters.Add("@Mode", Common.PageMode.ADD);
@@ -42,14 +34,13 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CreatedBy", entityGroupModel.CreatedBy);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
-                    await connection.ExecuteAsync(
+                    await Connection.ExecuteAsync(
                         "sp_EntityGroup",
                         parameters,
                         commandType: CommandType.StoredProcedure
                     );
 
                     return parameters.Get<string>("@Msg");
-                }
             }
             catch (SqlException ex)
             {
@@ -62,14 +53,11 @@ namespace DataAccessLayer.Implementation
                 return $"Error: {ex.Message}";
             }
         }
+
         public async Task<string> EditEntityGroup(UpdateEntityGroupModel entityGroupModel)
         {
             try
             {
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    await connection.OpenAsync();
-
                     var parameters = new DynamicParameters();
 
                     parameters.Add("@Mode", entityGroupModel.Mode);
@@ -85,14 +73,13 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CreatedBy", entityGroupModel.CreatedBy);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
-                    await connection.ExecuteAsync(
+                    await Connection.ExecuteAsync(
                         "sp_EntityGroup",
                         parameters,
                         commandType: CommandType.StoredProcedure
                     );
 
                     return parameters.Get<string>("@Msg");
-                }
             }
             catch (SqlException ex)
             {
@@ -110,10 +97,6 @@ namespace DataAccessLayer.Implementation
         {
             try
             {
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    await connection.OpenAsync();
-
                     var parameters = new DynamicParameters();
 
                     // Table-Valued Parameter (TVP)
@@ -145,14 +128,13 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@ModifiedBy", strUserGuid);
                     parameters.Add("@Msg", dbType: DbType.String, size: 500, direction: ParameterDirection.Output);
 
-                    var result = await connection.QueryAsync<DeleteResultModel>(
+                    var result = await Connection.QueryAsync<DeleteResultModel>(
                         "sp_EntityGroup",
                         parameters,
                         commandType: CommandType.StoredProcedure
                     );
 
                     return result.ToList();
-                }
             }
             catch (SqlException ex)
             {
@@ -184,35 +166,24 @@ namespace DataAccessLayer.Implementation
             try
             {
 
-                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
+                try
                 {
-                    await connection.OpenAsync();
-                    using (var transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            DynamicParameters parameters = new DynamicParameters();
-                            parameters.Add("@Mode", Common.PageMode.GET);
-                            parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("@Mode", Common.PageMode.GET);
+                    parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
-                            var multi = await connection.QueryMultipleAsync(
-                                "sp_EntityGroup",
-                                parameters,
-                                transaction: transaction,
-                                commandType: CommandType.StoredProcedure);
+                    var multi = await Connection.QueryMultipleAsync(
+                        "sp_EntityGroup",
+                        parameters,
+                        transaction: Transaction,
+                        commandType: CommandType.StoredProcedure);
 
-                            //transaction.Commit();
-
-                            return multi.Read<GetEntityGroupModel>().ToList();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
-                    }
+                    return multi.Read<GetEntityGroupModel>().ToList();
                 }
-
+                catch
+                {
+                    throw;
+                }
             }
             catch (SqlException ex)
             {
@@ -231,37 +202,25 @@ namespace DataAccessLayer.Implementation
             List<GetEntityGroupModel> lstResult = new List<GetEntityGroupModel>();
             try
             {
-
-                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
+                try
                 {
-                    await connection.OpenAsync();
-                    using (var transaction = connection.BeginTransaction())
-                    {
-                        try
-                        {
-                            DynamicParameters parameters = new DynamicParameters();
-                            parameters.Add("@Mode", Common.PageMode.GET);
-                            parameters.Add("@Guid", entityGroupModel.Guid);
-                            parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("@Mode", Common.PageMode.GET);
+                    parameters.Add("@Guid", entityGroupModel.Guid);
+                    parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
-                            var multi = await connection.QueryMultipleAsync(
-                                "sp_EntityGroup",
-                                parameters,
-                                transaction: transaction,
-                                commandType: CommandType.StoredProcedure);
+                    var multi = await Connection.QueryMultipleAsync(
+                        "sp_EntityGroup",
+                        parameters,
+                        transaction: Transaction,
+                        commandType: CommandType.StoredProcedure);
 
-                            //transaction.Commit();
-
-                            return multi.Read<GetEntityGroupModel>().ToList();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
-                    }
+                    return multi.Read<GetEntityGroupModel>().ToList();
                 }
-
+                catch
+                {
+                    throw;
+                }
             }
             catch (SqlException ex)
             {

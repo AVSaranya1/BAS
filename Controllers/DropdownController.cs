@@ -11,9 +11,9 @@ namespace WebApi.Controllers;
 [ApiController]
 public class DropdownController : ApiBaseController
 {
-    private readonly IUowDropdown _repo;
+    private readonly IUnitOfWork _repo;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IAuditLogService _auditLogService;
+    private readonly IAuditLogMasterService _auditLogService;
     private SessionService _sessionService;
     private GUID _guid;
     private readonly ILogger<DropdownController> _logger;
@@ -21,9 +21,9 @@ public class DropdownController : ApiBaseController
     public DropdownController(
         ILogger<DropdownController> logger,
         IConfiguration configuration,
-        IUowDropdown repository,
+        IUnitOfWork repository,
         IHttpContextAccessor httpContextAccessor,
-        IAuditLogService auditLogService,
+        IAuditLogMasterService auditLogService,
         GUID gUID,
         SessionService sessionService
     ) : base(configuration)
@@ -34,41 +34,7 @@ public class DropdownController : ApiBaseController
         _guid = gUID;
         _sessionService = sessionService;
         _repo = repository ?? throw new ArgumentNullException(nameof(repository));
-    }
-
-    [HttpGet("Level")]
-    public async Task<IActionResult> getLevelInfo()
-    {
-        try
-        {
-            string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
-            long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-            string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-
-            if (!string.IsNullOrEmpty(response))
-            {
-                await _auditLogService.LogAction("", "getLevelInfo", "");
-                var lstMasterModel = await _repo.MasterDALRepo.getLevel(userId);
-
-                if (lstMasterModel != null && lstMasterModel.Count() > 0)
-                {
-                    return Ok(lstMasterModel);
-                }
-                else
-                {
-                    return BadRequest(Common.Messages.NoRecordsFound);
-                }
-            }
-            else
-            {
-                return BadRequest(Common.Messages.Login);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex.Message + "  " + ex.StackTrace);
-            throw;
-        }
+        _repo.SwitchDatabase(DatabaseType.Master);
     }
 
     [HttpGet("ParentEntity")]
@@ -82,8 +48,9 @@ public class DropdownController : ApiBaseController
 
             if (!string.IsNullOrEmpty(response))
             {
-                await _auditLogService.LogAction("", "getParentEntity", "");
-                var lstMasterModel = await _repo.MasterDALRepo.getParentEntity(userId, RefID1, RefID2);
+                await _auditLogService.LogAction("getParentEntity");
+               
+                var lstMasterModel = await _repo.DropdownDALRepo.getParentEntity(userId, RefID1, RefID2);
 
                 if (lstMasterModel != null && lstMasterModel.Count() > 0)
                 {
@@ -115,8 +82,9 @@ public class DropdownController : ApiBaseController
 
             if (!string.IsNullOrEmpty(response))
             {
-                await _auditLogService.LogAction("", "getCountry", "");
-                var lstMasterModel = await _repo.MasterDALRepo.getCountry();
+                await _auditLogService.LogAction("getCountry");
+                
+                var lstMasterModel = await _repo.DropdownDALRepo.getCountry();
 
                 if (lstMasterModel != null && lstMasterModel.Count() > 0)
                 {
@@ -148,8 +116,9 @@ public class DropdownController : ApiBaseController
 
             if (!string.IsNullOrEmpty(response))
             {
-                await _auditLogService.LogAction("", "getCurrency", "");
-                var lstMasterModel = await _repo.MasterDALRepo.getCurrency();
+                await _auditLogService.LogAction("getCurrency");
+                
+                var lstMasterModel = await _repo.DropdownDALRepo.getCurrency();
 
                 if (lstMasterModel != null && lstMasterModel.Count() > 0)
                 {
@@ -181,8 +150,9 @@ public class DropdownController : ApiBaseController
 
             if (!string.IsNullOrEmpty(response))
             {
-                await _auditLogService.LogAction("", "getIndustry", "");
-                var lstMasterModel = await _repo.MasterDALRepo.getIndustry();
+                await _auditLogService.LogAction("getIndustry");
+                
+                var lstMasterModel = await _repo.DropdownDALRepo.getIndustry();
 
                 if (lstMasterModel != null && lstMasterModel.Count() > 0)
                 {
@@ -206,7 +176,7 @@ public class DropdownController : ApiBaseController
     }
 
     [HttpGet("TimeZone")]
-    public async Task<IActionResult> getTimeZone([FromQuery] long? RefID1)
+    public async Task<IActionResult> getTimeZone()
     {
         try
         {
@@ -214,8 +184,43 @@ public class DropdownController : ApiBaseController
 
             if (!string.IsNullOrEmpty(response))
             {
-                await _auditLogService.LogAction("", "getTimeZone", "");
-                var lstDropdownModel = await _repo.MasterDALRepo.getTimeZone(RefID1);
+                await _auditLogService.LogAction("getTimeZone");
+                
+                var lstDropdownModel = await _repo.DropdownDALRepo.getTimeZone();
+
+                if (lstDropdownModel != null && lstDropdownModel.Count() > 0)
+                {
+                    return Ok(lstDropdownModel);
+                }
+                else
+                {
+                    return BadRequest(Common.Messages.NoRecordsFound);
+                }
+            }
+            else
+            {
+                return BadRequest(Common.Messages.Login);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message + "  " + ex.StackTrace);
+            throw;
+        }
+    }
+
+    [HttpGet("Marital")]
+    public async Task<IActionResult> getMarital()
+    {
+        try
+        {
+            string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+
+            if (!string.IsNullOrEmpty(response))
+            {
+                await _auditLogService.LogAction("getMarital");
+                
+                var lstDropdownModel = await _repo.DropdownDALRepo.getMarital();
 
                 if (lstDropdownModel != null && lstDropdownModel.Count() > 0)
                 {

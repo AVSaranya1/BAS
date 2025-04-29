@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using DataAccessLayer.Model;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -21,21 +22,22 @@ namespace WebApi.Services
             _tokenBlacklistService = tokenBlacklistService;
         }
 
-        public string GenerateToken(string username,string Guid,string Password)
+        public string GenerateToken(string username, string userGuid, string orgGuid)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var keyBytes = Encoding.UTF8.GetBytes(_key);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, username,Guid,Password) }),
+                Subject = new ClaimsIdentity(new[] {
+                    new Claim(ClaimTypes.Name, username, ClaimValueTypes.String, "BAS"),
+                    new Claim(JwtClaimType.uGuid, userGuid, ClaimValueTypes.String, "BAS"),
+                    new Claim(JwtClaimType.orgGuid, orgGuid,  ClaimValueTypes.String, "BAS")
+                }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256
                 )
-
-
-
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
