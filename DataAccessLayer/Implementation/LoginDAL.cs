@@ -17,17 +17,10 @@ using System.Transactions;
 
 namespace DataAccessLayer.Implementation
 {
-    public class LoginDAL : RepositoryBase, ILoginDAL
+    public class LoginDAL : BaseRepository, ILoginDAL
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IConfiguration _configuration;
-        private readonly EncryptedDecrypt? _encryptedDecrypt;
-        public LoginDAL(IDbTransaction transaction, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, EncryptedDecrypt encryptedDecrypt ) : base(transaction)
-        {
-            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _encryptedDecrypt = new EncryptedDecrypt(configuration);
-        }
+        public LoginDAL(IDbConnection connection, IDbTransaction transaction) : base(connection, transaction)
+        { }
 
         public async Task<List<ResultModel>> UserLogin(LoginModel objLoginModel)
         {
@@ -40,15 +33,9 @@ namespace DataAccessLayer.Implementation
             dynamicParameters.Add("@DeviceName", objLoginModel.DeviceName);
             dynamicParameters.Add("@BrowserName", objLoginModel.BrowserName);
 
-            if (Connection == null)
-                throw new ArgumentNullException(nameof(Connection), "The database connection cannot be null.");
-
- 
-
             using var multi = await Connection.QueryMultipleAsync(
                 "sp_Authentication",
                 dynamicParameters,
-                transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
 
             var res = multi.Read<ResultModel>().ToList();
@@ -66,9 +53,6 @@ namespace DataAccessLayer.Implementation
                         break;
                 }
             }
-
-
-
             return res;
         }
 
@@ -83,12 +67,7 @@ namespace DataAccessLayer.Implementation
             dynamicParameters.Add("@DeviceName", objLoginModel.DeviceName);
             dynamicParameters.Add("@BrowserName", objLoginModel.BrowserName);
 
-            string connectionString = GetConnectionString(Connection.ConnectionString);
-
-            await using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            using var multi = await connection.QueryMultipleAsync(
+            using var multi = await Connection.QueryMultipleAsync(
                 "sp_Authentication",
                 dynamicParameters,
                 commandType: CommandType.StoredProcedure);
@@ -100,70 +79,9 @@ namespace DataAccessLayer.Implementation
                 var details = multi.Read<LoginDetailModel>().ToList();
                 res[0].lstLoginDetails = details;
             }
-
             return res;
         }
 
-
-        private string GetConnectionString(string OldConnectionstring)
-        {
-            string? connectionString = string.Empty;
-            var session = _httpContextAccessor?.HttpContext?.Session;
-
-            if (session != null && !string.IsNullOrEmpty(session.GetString("DBName")) &&
-                session.GetString("InstanceChange") != "Y")
-            {
-                connectionString = BuildConnectionString(session.GetString("DBName"));
-            }
-            else if (session != null &&
-                     session.GetString("InstanceName") != null &&
-                     session.GetString("InstanceChange") == "Y" &&
-                     session.GetString("DataBaseUserName") != null &&
-                     session.GetString("DataBasePassword") != null)
-            {
-                connectionString = BuildConnectionString(
-                    _encryptedDecrypt?.Decrypt(session.GetString("InstanceName")),
-                    _encryptedDecrypt?.Decrypt(session.GetString("DataBaseUserName")),
-                    _encryptedDecrypt?.Decrypt(session.GetString("DataBasePassword")),
-                    session.GetString("DBName"));
-            }
-            else
-            {
-                // var config = context.RequestServices.GetService<IConfiguration>();
-                connectionString = OldConnectionstring;
-
-            }
-
-
-            return connectionString;
-        }
-
-        private string BuildConnectionString(string? dbName)
-        {
-            var config = _httpContextAccessor?.HttpContext?.RequestServices.GetService<IConfiguration>();
-            var connectionString = config?.GetConnectionString("connection");
-            var builder = new SqlConnectionStringBuilder(connectionString)
-            {
-                InitialCatalog = dbName
-            };
-            return builder.ToString();
-        }
-
-        private string BuildConnectionString(string? serverName, string? userID, string? password, string? dbName)
-        {
-            var config = _httpContextAccessor?.HttpContext?.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
-            var connectionString = config?.GetConnectionString("connection");
-            var builder = new SqlConnectionStringBuilder(connectionString)
-            {
-                DataSource = serverName,
-                UserID = userID,
-                Password = password,
-                InitialCatalog = dbName,
-                TrustServerCertificate = true,
-                MultipleActiveResultSets = true
-            };
-            return builder.ToString();
-        }
         public async Task<List<ResultModel>> GetUserID(LoginModel objloginModel)
         {
             DynamicParameters dyParameter = new DynamicParameters();
@@ -174,14 +92,12 @@ namespace DataAccessLayer.Implementation
             dyParameter.Add("@IPAddress", objloginModel.IPAddress);
             dyParameter.Add("@DeviceName", objloginModel.DeviceName);
             dyParameter.Add("@BrowserName", objloginModel.BrowserName);
-            if (Connection == null)
-                throw new ArgumentNullException(nameof(Connection), "The database connection cannot be null.");
 
             var multi = await Connection.QueryMultipleAsync("sp_Authentication",
                 dyParameter,
-                transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
             var res = multi.Read<ResultModel>().ToList();
+
             if (res is { Count: > 0 })
             {
                 switch (res[0].RetVal)
@@ -195,8 +111,6 @@ namespace DataAccessLayer.Implementation
                         break;
                 }
             }
-
-
             return res;
         }
 
@@ -205,52 +119,43 @@ namespace DataAccessLayer.Implementation
             DynamicParameters dynamicParameters = new DynamicParameters();
             dynamicParameters.Add("@Mode", Common.PageMode.GET_ORG);
             dynamicParameters.Add("@UserGUID", objloginModel.Guid);
-            if (Connection == null)
-                throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
 
             var multi = await Connection.QueryMultipleAsync("sp_Authentication",
                 dynamicParameters,
-                transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
             var res = multi.Read<OrganisationDBDetails>().ToList();
             return res;
         }
 
-        public async Task<List<GetDropDownDataModel>> GetDDlLanguage(string Mode, string RefID1, string RefID2, string RefID3)
-        {
-            DynamicParameters dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@Mode", Mode);
-            dynamicParameters.Add("RefID1", RefID1);
-            dynamicParameters.Add("RefID2", RefID2);
-            dynamicParameters.Add("RefID3", RefID3);
-            if (Connection == null)
-                throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
+        //public async Task<List<GetDropDownDataModel>> GetDDlLanguage(string Mode, string RefID1, string RefID2, string RefID3)
+        //{
+        //    DynamicParameters dynamicParameters = new DynamicParameters();
+        //    dynamicParameters.Add("@Mode", Mode);
+        //    dynamicParameters.Add("RefID1", RefID1);
+        //    dynamicParameters.Add("RefID2", RefID2);
+        //    dynamicParameters.Add("RefID3", RefID3);
 
-            var multi = await Connection.QueryMultipleAsync("sp_ListData",
-                dynamicParameters,
-                transaction: Transaction,
-                commandType: CommandType.StoredProcedure);
-            var res = multi.Read<GetDropDownDataModel>().ToList();
-            return res;
-        }
+        //    var multi = await Connection.QueryMultipleAsync("sp_ListData",
+        //        dynamicParameters,
+        //        commandType: CommandType.StoredProcedure);
+        //    var res = multi.Read<GetDropDownDataModel>().ToList();
+        //    return res;
+        //}
 
-        public async Task<List<GetDropDownDataModel>> GetDDlModule(string Mode, string RefID1, string RefID2, string RefID3)
-        {
-            DynamicParameters dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@Mode", Mode);
-            dynamicParameters.Add("RefID1", RefID1);
-            dynamicParameters.Add("RefID2", RefID2);
-            dynamicParameters.Add("RefID3", RefID3);
-            if (Connection == null)
-                throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
+        //public async Task<List<GetDropDownDataModel>> GetDDlModule(string Mode, string RefID1, string RefID2, string RefID3)
+        //{
+        //    DynamicParameters dynamicParameters = new DynamicParameters();
+        //    dynamicParameters.Add("@Mode", Mode);
+        //    dynamicParameters.Add("RefID1", RefID1);
+        //    dynamicParameters.Add("RefID2", RefID2);
+        //    dynamicParameters.Add("RefID3", RefID3);
 
-            var multi = await Connection.QueryMultipleAsync("sp_ListData",
-                dynamicParameters,
-                transaction: Transaction,
-                commandType: CommandType.StoredProcedure);
-            var res = multi.Read<GetDropDownDataModel>().ToList();
-            return res;
-        }
+        //    var multi = await Connection.QueryMultipleAsync("sp_ListData",
+        //        dynamicParameters,
+        //        commandType: CommandType.StoredProcedure);
+        //    var res = multi.Read<GetDropDownDataModel>().ToList();
+        //    return res;
+        //}
 
         public async Task<bool> UpdateLoginDetails(LoginDetails loginDetails)
         {
@@ -262,8 +167,6 @@ namespace DataAccessLayer.Implementation
             dynamicParameters.Add("@IPAddress", loginDetails.IPAddress);
             dynamicParameters.Add("@DeviceInfo", loginDetails.DeviceInfo);
             dynamicParameters.Add("@DeviceInfo", loginDetails.DeviceInfo);
-            if (Connection == null)
-                throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
 
             var multi = await Connection.QueryMultipleAsync("sp_LoginDetails",
                 dynamicParameters,
@@ -275,7 +178,6 @@ namespace DataAccessLayer.Implementation
 
         public async Task<bool> InsertLoginDetails(LoginDetails loginDetails)
         {
-
             try
             {
                 DynamicParameters dynamicParameters = new DynamicParameters();
@@ -288,9 +190,6 @@ namespace DataAccessLayer.Implementation
                 // Adding Output Parameters
                 dynamicParameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
                 dynamicParameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
-
-                if (Connection == null)
-                    throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
 
                 // Execute stored procedure using existing transaction
                 await Connection.ExecuteAsync(
@@ -305,16 +204,12 @@ namespace DataAccessLayer.Implementation
 
                 if (result > 0)
                 {
-                    Transaction?.Commit(); // Commit the transaction
                     return true;
                 }
                 else
                 {
-                    Transaction?.Rollback(); // Rollback on failure
-                    Console.WriteLine($"Audit Log Error: {message}");
                     return false;
                 }
-
             }
             catch (Exception ex)
             {

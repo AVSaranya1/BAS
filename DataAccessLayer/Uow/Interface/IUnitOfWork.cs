@@ -22,7 +22,7 @@ public interface IUnitOfWork : IDisposable
     //IForgotPasswordDAL ForgotPasswordDALRepo { get; }
     //IGUIDDAL GuidDALRepo { get; }
     //ILanguageDAL LanguageDALRepo { get; }
-    //ILoginDAL LoginDALRepo { get; }
+    ILoginDAL LoginDALRepo { get; }
     //IMailServerDAL MailServerDALRepo { get; }
     //IMenuDAL MenuDALRepo { get; }
     //INationalityDAL NationalityDALRepo { get; }

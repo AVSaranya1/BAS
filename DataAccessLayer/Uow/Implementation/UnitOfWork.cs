@@ -14,6 +14,7 @@ public class UnitOfWork: IUnitOfWork
     private bool _disposed = false;
 
     private IAuditLogDAL? _auditLogDALRepo;
+    private ILoginDAL? _loginDALRepo;
     private IBusinessEntityDAL? _businessEntityDALRepo;
     private IEntityGroupDAL? _entityGroupDALRepo;
     private IDropdownDAL? _dropdownDALRepo;
@@ -76,6 +77,7 @@ public class UnitOfWork: IUnitOfWork
     private void ResetRepository()
     {
         _auditLogDALRepo = null;
+        _loginDALRepo = null;
         _businessEntityDALRepo = null;
         _entityGroupDALRepo = null;
         _dropdownDALRepo = null;
@@ -84,6 +86,9 @@ public class UnitOfWork: IUnitOfWork
 
     public IAuditLogDAL auditLogDALRepo
           => _auditLogDALRepo ??= new AuditLogDAL(_connection, _transaction);
+
+    public ILoginDAL LoginDALRepo
+            => _loginDALRepo ??= new LoginDAL(_connection, _transaction);
 
     public IBusinessEntityDAL BusinessEntityDALRepo
             => _businessEntityDALRepo ??= new BusinessEntityDAL(_connection, _transaction);

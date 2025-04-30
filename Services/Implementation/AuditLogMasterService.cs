@@ -14,12 +14,11 @@ namespace WebApi.Services.Implementation
         public AuditLogMasterService(IUnitOfWork uowAuditLog, IHttpContextAccessor httpContextAccessor)
         {
             _uowAuditLog = uowAuditLog;
-            _httpContextAccessor = httpContextAccessor;
+            _httpContextAccessor = httpContextAccessor;            
         }
 
         public async Task LogAction(string action)
         {
-            _uowAuditLog.SwitchDatabase(DatabaseType.Master);
             _uowAuditLog.BeginTransaction();
             string? token = null;
             var httpContext = _httpContextAccessor.HttpContext;
@@ -34,9 +33,9 @@ namespace WebApi.Services.Implementation
 
             var auditLog = new AuditLog
             {
-                UserGuid = UserGuid,
+                UserGuid = UserGuid ?? string.Empty,
                 Action = action,
-                Token = token,
+                Token = token ?? string.Empty,
                 IPAddress = httpContext?.Connection?.RemoteIpAddress?.ToString(),
                 DeviceInfo = httpContext?.Request?.Headers["User-Agent"].ToString(),
                 CreatedDateTime = DateTime.UtcNow

@@ -34,7 +34,6 @@ public class DropdownController : ApiBaseController
         _guid = gUID;
         _sessionService = sessionService;
         _repo = repository ?? throw new ArgumentNullException(nameof(repository));
-        _repo.SwitchDatabase(DatabaseType.Master);
     }
 
     [HttpGet("ParentEntity")]

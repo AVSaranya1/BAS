@@ -36,16 +36,16 @@ namespace WebApi.Controllers
 {
 
     [ApiController]
-    //[Route("api/[controller]")]
     [Route("api/{region?}/[controller]")] // {region} is optional
     public class LoginController : ApiBaseController
     {
+        private readonly IUnitOfWork _repo;
         private readonly ILogger<LoginController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JwtService _jwtService;
         //private readonly AppGlobalVariableService _appGlobalVariableService;
         private readonly EncryptedDecrypt _encryptedDecrypt;
-        private readonly IAuditLogService _auditLogService;
+        private readonly IAuditLogMasterService _auditLogService;
         //private readonly IStringLocalizer _localizer;
         private readonly TranslationService _translationService;
         string token = string.Empty;
@@ -68,7 +68,7 @@ namespace WebApi.Controllers
 
         public LoginController(ILogger<LoginController> logger, EncryptedDecrypt encryptedDecrypt,
         JwtService jwtService, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,
-        IAuditLogService auditLogService, TranslationService translationService, UploadFileServices uploadFileServices) //IStringLocalizer<SharedResources> localizer)
+        IAuditLogMasterService auditLogService, TranslationService translationService, UploadFileServices uploadFileServices, IUnitOfWork repo) //IStringLocalizer<SharedResources> localizer)
         : base(configuration)
         {
             _logger = logger;
@@ -82,7 +82,8 @@ namespace WebApi.Controllers
             //_serviceUrlProvider = serviceUrlProvider;
             // _common = common;
             _uploadfile = uploadFileServices;
-            _virtualPath= Path.Combine(configuration["FileUpload:VirtualFilePath"], Common.FileFolder.Org) ?? Common.FileFolder.img;
+            _virtualPath = Path.Combine(configuration["FileUpload:VirtualFilePath"], Common.FileFolder.Org) ?? Common.FileFolder.img;
+            _repo = repo;
         }
 
         [HttpPost("Get UserID")]
@@ -92,29 +93,24 @@ namespace WebApi.Controllers
             {
                 var objLogModel = new LoginModel { UserName = username, LanguageCode = Language };
 
+                var lstuser = await _repo.LoginDALRepo.GetUserID(objLogModel);
 
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+                if (lstuser == null || lstuser.Count == 0)
                 {
-                    var lstuser = await _repo.LoginDALRepo.GetUserID(objLogModel);
-
-                    if (lstuser == null || lstuser.Count == 0)
-                    {
+                    return Unauthorized("Invalid User Name.");
+                }
+                await _auditLogService.LogAction("LOGIN-UserName");
+                switch (lstuser[0].RetVal)
+                {
+                    case -1:
                         return Unauthorized("Invalid User Name.");
-                    }
-                    await _auditLogService.LogAction("", "LOGIN-UserName", "");
-                    switch (lstuser[0].RetVal)
-                    {
-                        case -1:
-                            return Unauthorized("Invalid User Name.");
 
-                        case 1:
-                            GetUserData(lstuser, "GET");
-                            return Ok(lstuser);
+                    case 1:
+                        GetUserData(lstuser, "GET");
+                        return Ok(lstuser);
 
-                        default:
-                            return Unauthorized("Invalid User Name.");
-                    }
-
+                    default:
+                        return Unauthorized("Invalid User Name.");
                 }
             }
             catch (Exception ex)
@@ -124,11 +120,9 @@ namespace WebApi.Controllers
             }
         }
 
-
         [HttpGet("UserLogin")]
         public async Task<IActionResult> UserLogin(string username, string password)
         {
-
             try
             {
                 string strGuid = string.Empty;
@@ -136,11 +130,9 @@ namespace WebApi.Controllers
                 {
                     strGuid = Convert.ToString(HttpContext?.Session?.GetString("Guid") ?? "");
                 }
+
                 var objLogModel = new LoginModel { UserName = username, Password = EncryptShaAlg.Encrypt(password + strGuid) };
 
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
-
-                {
                     var lstLoginUser = await _repo.LoginDALRepo.UserLogin(objLogModel);
 
                     if (lstLoginUser == null || !lstLoginUser.Any())
@@ -172,7 +164,7 @@ namespace WebApi.Controllers
                             var result = LogLoginDetails("LOGIN", vGuid?.ToString() ?? "", token);
 
                             HttpContext?.Session?.SetString(Common.SessionVariables.Token, token);
-                            await _auditLogService.LogAction(strGuid ?? "", "LOGIN", token);
+                            await _auditLogService.LogAction("LOGIN");
 
                             return Ok(new
                             {
@@ -183,7 +175,6 @@ namespace WebApi.Controllers
                         default:
                             return Unauthorized("Invalid login.");
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -305,10 +296,8 @@ namespace WebApi.Controllers
                 if (!Directory.Exists(_virtualPath))
                     Directory.CreateDirectory(_virtualPath);
 
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
-                {
                     var lstOrgDetails = await _repo.LoginDALRepo.GetOrganisationWithDBDetails(objLogModel);
-                    await _auditLogService.LogAction(userGuid, "GetOrganisationWithDBDetails", token);
+                    await _auditLogService.LogAction("GetOrganisationWithDBDetails");
                     if (lstOrgDetails != null)
                     {
                         foreach (var org in lstOrgDetails)
@@ -326,9 +315,6 @@ namespace WebApi.Controllers
                     {
                         return BadRequest();
                     }
-                }
-
-
             }
             catch (Exception ex)
             {
@@ -353,7 +339,7 @@ namespace WebApi.Controllers
                     string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
                     string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
 
-                    await _auditLogService.LogAction(userGuid, "SelectedOrganisation", token);
+                    await _auditLogService.LogAction("SelectedOrganisation");
                 }
 
                 var dbDetailsJson = HttpContext?.Session.GetString(Common.SessionVariables.OrgDetails);
@@ -381,16 +367,14 @@ namespace WebApi.Controllers
                     }
                 }
 
-
-
                 var loginModel = new LoginModel
                 {
                     UserName = HttpContext?.Session.GetString(Common.SessionVariables.UserName),
                     Password = HttpContext?.Session.GetString(Common.SessionVariables.Password),
                     GlobalUser = HttpContext?.Session.GetString(Common.SessionVariables.GlobalUser)
-                };
-                using var repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt);
-                var users = await repo.LoginDALRepo.ClientUserLogin(loginModel);
+                };               
+
+                var users = await _repo.LoginDALRepo.ClientUserLogin(loginModel);
 
                 if (users != null && users.Any())
                 {
@@ -419,8 +403,7 @@ namespace WebApi.Controllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
-
-        //}
+                
         [HttpPost("Logout")]
         public async Task<IActionResult> Logout(string token)
         {
@@ -440,7 +423,7 @@ namespace WebApi.Controllers
                     var result = LogLoginDetails("LOGOUT", vGuid?.ToString() ?? "", vtoken?.ToString() ?? "");
                 }
 
-                await _auditLogService.LogAction(userGuid ?? "", "SelectedOrganisation", token ?? "");
+                await _auditLogService.LogAction("SelectedOrganisation");
 
                 HttpContext?.Session.Clear();
                 return Ok("Logout successful. Token revoked.");
@@ -452,62 +435,63 @@ namespace WebApi.Controllers
             }
         }
 
+        // Move to DropDown Controller
 
-        [HttpPost("DropDownLanguage")]
-        public async Task<IActionResult> GetDDlLanguage(string? RefID1, string? RefID2, string? RefID3)
-        {
-            try
-            {
-                // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
-                string Mode = "LANGUAGE";
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
-                {
-                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1 ?? "", RefID2 ?? "", RefID3 ?? "");
-                    await _auditLogService.LogAction(userGuid, "GetDDlLanguage", token);
+        //[HttpPost("DropDownLanguage")]
+        //public async Task<IActionResult> GetDDlLanguage(string? RefID1, string? RefID2, string? RefID3)
+        //{
+        //    try
+        //    {
+        //        // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
+        //        string Mode = "LANGUAGE";
+        //        using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+        //        {
+        //            var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1 ?? "", RefID2 ?? "", RefID3 ?? "");
+        //            await _auditLogService.LogAction(userGuid, "GetDDlLanguage", token);
 
-                    if (lstuser != null)
-                    {
-                        return Ok(lstuser);
-                    }
-                    else
-                    {
-                        return Unauthorized("Invalid User Name.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"{ex.Message} {ex.StackTrace}");
-                return BadRequest("Bad Request");
-            }
-        }
+        //            if (lstuser != null)
+        //            {
+        //                return Ok(lstuser);
+        //            }
+        //            else
+        //            {
+        //                return Unauthorized("Invalid User Name.");
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"{ex.Message} {ex.StackTrace}");
+        //        return BadRequest("Bad Request");
+        //    }
+        //}
 
-        [HttpPost("DropDownModules")]
-        public async Task<IActionResult> GetDDlModules(string? RefID1, string? RefID2, string? RefID3)
-        {
-            try
-            {
-                string Mode = "MODULEID";
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
-                {
-                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1 ?? "", RefID2 ?? "", RefID3 ?? "");
-                    await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
-                    if (lstuser != null)
-                    {
-                        return Ok(lstuser);
-                    }
-                    else
-                    {
-                        return Unauthorized("Invalid User Name.");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"{ex.Message} {ex.StackTrace}");
-                return BadRequest("Bad Request");
-            }
-        }
+        //[HttpPost("DropDownModules")]
+        //public async Task<IActionResult> GetDDlModules(string? RefID1, string? RefID2, string? RefID3)
+        //{
+        //    try
+        //    {
+        //        string Mode = "MODULEID";
+        //        using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+        //        {
+        //            var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1 ?? "", RefID2 ?? "", RefID3 ?? "");
+        //            await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
+        //            if (lstuser != null)
+        //            {
+        //                return Ok(lstuser);
+        //            }
+        //            else
+        //            {
+        //                return Unauthorized("Invalid User Name.");
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"{ex.Message} {ex.StackTrace}");
+        //        return BadRequest("Bad Request");
+        //    }
+        //}
 
         private async Task LogLoginDetails(string Mode, string userGuid, string token)
         {
@@ -529,18 +513,16 @@ namespace WebApi.Controllers
                     UTCCreatedDateTime = DateTime.UtcNow
                 };
 
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
-                {
-                    var reslt = await _repo.LoginDALRepo.InsertLoginDetails(loginDetails);
-                }
-           
+                _repo.BeginTransaction();
+                var reslt = await _repo.LoginDALRepo.InsertLoginDetails(loginDetails);
+                await _repo.CompleteAsync();
+
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex.Message + "  " + ex.StackTrace);
                 throw;
             }
-}
-
+        }
     }
 }
